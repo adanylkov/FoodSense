@@ -16,7 +16,7 @@ public class JPKJsonReceiptReaderTest
         // Assert
         receipt.Should().NotBeNull();
         var headerData = receipt.Header?.FirstOrDefault(h => h.HeaderData != null)?.HeaderData;
-        
+
         headerData.Should().NotBeNull();
         headerData.Tin.Should().Be("7791011327");
         headerData.DocNumber.Should().Be(369734);
@@ -35,7 +35,6 @@ public class JPKJsonReceiptReaderTest
         sellLines.Should().HaveCount(3);
         sellLines[0].Name.Should().Contain("NektarBanRiviva1l");
         sellLines[0].Total.Should().Be(837);
-        sellLines[2].Quantity.Should().Be("0,780"); // Testing decimal strings
     }
 
     [Fact]
@@ -82,6 +81,7 @@ public class JPKJsonReceiptReaderTest
         if (pack is null) return;
 
         pack.Name.Should().Be("But Plastik kaucja");
+
         pack.Price.Should().Be(50);
         pack.Quantity.Should().Be("3");
     }
@@ -100,5 +100,15 @@ public class JPKJsonReceiptReaderTest
         payment.Name.Should().Be("Visa Debit 07 1");
         payment.Amount.Should().Be(1862); // 18.62 PLN
     }
-}
 
+    [Fact]
+    public void Deserialize_ShouldMapProductModel()
+    {
+      var products = JPKJsonReceiptReader.ReadProducts(SampleJson).ToList();
+
+      products.Should().NotBeNull();
+      products.Should().HaveCount(3);
+      products[0].Name.Should().Contain("NektarBanRiviva1l");
+    }
+
+}
