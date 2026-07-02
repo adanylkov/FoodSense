@@ -104,7 +104,9 @@ public class JPKJsonReceiptReaderTest
     [Fact]
     public void Deserialize_ShouldMapProductModel()
     {
-      var products = JPKJsonReceiptReader.ReadProducts(SampleJson).ToList();
+      var receiptReader = new JPKJsonReceiptReader(SampleJson);
+      var products = receiptReader.Products;
+      products.First().Should().NotBeNull();
 
       products.Should().NotBeNull();
       products.Should().HaveCount(3);

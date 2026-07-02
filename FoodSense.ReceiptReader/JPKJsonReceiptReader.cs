@@ -9,6 +9,14 @@ namespace FoodSense.ReceiptReader;
 public class JPKJsonReceiptReader
 {
   private static readonly CultureInfo PolishCulture = new("pl-PL");
+  private readonly IList<Product> _products = [];
+  public IReadOnlyList<Product> Products => (IReadOnlyList<Product>)_products;
+
+  public JPKJsonReceiptReader(string json)
+  {
+    _products = ReadProducts(json).ToList();
+  }
+
 
   public static IEnumerable<BodyItem> Read(string json)
   {
@@ -19,7 +27,7 @@ public class JPKJsonReceiptReader
     return receiptRoot?.Body ?? Enumerable.Empty<BodyItem>();
   }
 
-  public static IEnumerable<Product> ReadProducts(string json)
+  private IEnumerable<Product> ReadProducts(string json)
   {
     if (string.IsNullOrWhiteSpace(json))
       return Enumerable.Empty<Product>();
