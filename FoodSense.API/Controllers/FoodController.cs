@@ -15,13 +15,6 @@ namespace FoodSense.API.Controllers
         [HttpGet("{barcode:long}")]
         public async Task<IActionResult> GetProduct(long barcode)
         {
-            var strategy = context.Database.CreateExecutionStrategy();
-            await strategy.ExecuteAsync(async () =>
-            {
-                await using var transaction = await context.Database.BeginTransactionAsync();
-                await context.Database.MigrateAsync();
-                await transaction.CommitAsync();
-            });
             var productResponse = await foodFactsWrapper.FetchProductByCodeAsync(barcode.ToString());
             if (productResponse.Status is true)
             {
