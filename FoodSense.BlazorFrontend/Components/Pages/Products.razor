@@ -1,0 +1,263 @@
+@page "/products"
+@rendermode InteractiveServer
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>Products</PageTitle>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Products</h1>
+            <p class="text-muted mb-0">Create, edit, and remove products through the API.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="alert alert-success">@message</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">@((editingProductId is null) ? "Create a product" : "Edit product")</h2>
+
+                    <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
+                        <div class="mb-3">
+                            <label class="form-label">Barcode</label>
+                            <InputText class="form-control" @bind-Value="formModel.Barcode" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="formModel.ProductName" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Brands</label>
+                            <InputText class="form-control" @bind-Value="formModel.Brands" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <InputText class="form-control" @bind-Value="formModel.ProductQuantity" />
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" type="submit" disabled="@isSaving">
+                                @((isSaving) ? "Saving..." : "Save")
+                            </button>
+
+                            @if (editingProductId is not null)
+                            {
+                                <button class="btn btn-outline-secondary" type="button" @onclick="ResetForm">
+                                    Cancel
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Existing products</h2>
+
+                    @if (isLoading)
+                    {
+                        <p class="text-muted">Loading products...</p>
+                    }
+                    else if (!products.Any())
+                    {
+                        <p class="text-muted">No products found yet.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Barcode</th>
+                                        <th>Name</th>
+                                        <th>Brands</th>
+                                        <th>Quantity</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var product in products)
+                                    {
+                                        <tr>
+                                            <td>@product.Id</td>
+                                            <td>@product.Barcode</td>
+                                            <td>@product.ProductName</td>
+                                            <td>@product.Brands</td>
+                                            <td>@product.ProductQuantity</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" type="button" @onclick="() => StartEditing(product)">Edit</button>
+                                                    <button class="btn btn-outline-danger" type="button" @onclick="() => DeleteProduct(product.Id)">Delete</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly List<ProductDto> products = [];
+    private readonly ProductFormModel formModel = new();
+    private int? editingProductId;
+    private bool isLoading;
+    private bool isSaving;
+    private string? message;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        isLoading = true;
+        message = null;
+        error = null;
+
+        try
+        {
+            var loadedProducts = await Http.GetFromJsonAsync<List<ProductDto>>("api/Food/GetProducts?page=1&pageSize=100");
+            products.Clear();
+
+            if (loadedProducts is not null)
+            {
+                products.AddRange(loadedProducts);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSaving = true;
+        message = null;
+        error = null;
+
+        try
+        {
+            var payload = new ProductDto
+            {
+                Id = editingProductId ?? 0,
+                Barcode = formModel.Barcode,
+                ProductName = formModel.ProductName,
+                Brands = formModel.Brands,
+                ProductQuantity = formModel.ProductQuantity
+            };
+
+            if (editingProductId is null)
+            {
+                await Http.PostAsJsonAsync("api/Food/CreateProduct", payload);
+                message = "Product created.";
+            }
+            else
+            {
+                await Http.PutAsJsonAsync($"api/Food/UpdateProduct/{editingProductId}", payload);
+                message = "Product updated.";
+            }
+
+            ResetForm();
+            await LoadProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void StartEditing(ProductDto product)
+    {
+        editingProductId = product.Id;
+        formModel.Barcode = product.Barcode;
+        formModel.ProductName = product.ProductName;
+        formModel.Brands = product.Brands;
+        formModel.ProductQuantity = product.ProductQuantity;
+        message = null;
+        error = null;
+    }
+
+    private void ResetForm()
+    {
+        editingProductId = null;
+        formModel.Barcode = string.Empty;
+        formModel.ProductName = string.Empty;
+        formModel.Brands = string.Empty;
+        formModel.ProductQuantity = string.Empty;
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        isSaving = true;
+        message = null;
+        error = null;
+
+        try
+        {
+            await Http.DeleteAsync($"api/Food/DeleteProduct/{id}");
+            message = "Product deleted.";
+            await LoadProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private sealed class ProductDto
+    {
+        public int Id { get; set; }
+        public string Barcode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string Brands { get; set; } = string.Empty;
+        public string ProductQuantity { get; set; } = string.Empty;
+    }
+
+    private sealed class ProductFormModel
+    {
+        public string Barcode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string Brands { get; set; } = string.Empty;
+        public string ProductQuantity { get; set; } = string.Empty;
+    }
+}

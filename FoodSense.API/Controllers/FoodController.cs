@@ -85,8 +85,8 @@ namespace FoodSense.API.Controllers
                 return NotFound();
             }
 
+            product.Id = id;
             context.Entry(dbProduct).CurrentValues.SetValues(product);
-            dbProduct.Id = id;
 
             await context.SaveChangesAsync();
 

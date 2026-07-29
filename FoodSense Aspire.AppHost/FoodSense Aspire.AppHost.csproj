@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FoodSense.API\FoodSense.API.csproj" />
+    <ProjectReference Include="..\FoodSense.BlazorFrontend\FoodSense.BlazorFrontend.csproj" />
   </ItemGroup>
 
 </Project>

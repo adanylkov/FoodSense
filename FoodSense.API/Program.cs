@@ -17,6 +17,22 @@ builder.Services.AddAutoMapper((config) => {
 
     }, Assembly.GetExecutingAssembly());
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("BlazorFrontend", policy =>
+    {
+        policy.AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+
+        policy.SetIsOriginAllowed(origin =>
+        {
+            return Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                && (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || uri.Host.Equals("127.0.0.1"));
+        });
+    });
+});
+
 builder.Logging.AddOpenTelemetry();
 
 var app = builder.Build();
@@ -29,6 +45,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("BlazorFrontend");
 
 app.UseAuthorization();
 

@@ -15,8 +15,7 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<Models.Product>(entityBuilder =>
         {
             entityBuilder.HasKey(p => p.Id);
-            entityBuilder.HasAlternateKey(p => p.Barcode);
-
+ 
             entityBuilder.Ignore(p => p.EcoscoreData);
             entityBuilder.Ignore(p => p.SelectedImages);
         });
