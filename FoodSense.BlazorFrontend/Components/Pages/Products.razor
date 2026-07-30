@@ -82,38 +82,50 @@
                     }
                     else
                     {
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Barcode</th>
-                                        <th>Name</th>
-                                        <th>Brands</th>
-                                        <th>Quantity</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var product in products)
-                                    {
-                                        <tr>
-                                            <td>@product.Id</td>
-                                            <td>@product.Barcode</td>
-                                            <td>@product.ProductName</td>
-                                            <td>@product.Brands</td>
-                                            <td>@product.ProductQuantity</td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <button class="btn btn-outline-primary" type="button" @onclick="() => StartEditing(product)">Edit</button>
-                                                    <button class="btn btn-outline-danger" type="button" @onclick="() => DeleteProduct(product.Id)">Delete</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                        <div class="row row-cols-1 row-cols-md-3 g-4">
+                            @foreach (var product in products)
+                            {
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">@product.ProductName</h5>
+                                            <p class="card-text"><strong>Barcode:</strong> @product.Barcode</p>
+                                            <p class="card-text"><strong>Brands:</strong> @product.Brands</p>
+                                            <p class="card-text"><strong>Quantity:</strong> @product.ProductQuantity</p>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <button class="btn btn-outline-primary" type="button" @onclick="(() => StartEditing(product))">Edit</button>
+                                                <button class="btn btn-outline-danger" type="button" @onclick="(() => DeleteProduct(product.Id))">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
+
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mt-3">
+                                @if (currentPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage - 1))">Previous</button>
+                                    </li>
+                                }
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <button class="page-link" @onclick="(() => LoadProductsAsync(i))">@i</button>
+                                    </li>
+                                }
+                                @if (currentPage < totalPages)
+                                {
+                                    <li class="page-item">
+                                        <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage + 1))">Next</button>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
                     }
                 </div>
             </div>
@@ -130,25 +142,30 @@
     private string? message;
     private string? error;
 
+    private int currentPage = 1;
+    private int pageSize = 12;
+    private int totalPages;
+
     protected override async Task OnInitializedAsync()
     {
-        await LoadProductsAsync();
+        await LoadProductsAsync(currentPage);
     }
 
-    private async Task LoadProductsAsync()
+    private async Task LoadProductsAsync(int page)
     {
         isLoading = true;
         message = null;
         error = null;
+        currentPage = page;
 
         try
         {
-            var loadedProducts = await Http.GetFromJsonAsync<List<ProductDto>>("api/Food/GetProducts?page=1&pageSize=100");
-            products.Clear();
-
-            if (loadedProducts is not null)
+            var response = await Http.GetFromJsonAsync<ApiResponse<List<ProductDto>>>($"api/Food/GetProducts?page={currentPage}&pageSize={pageSize}");
+            if (response != null)
             {
-                products.AddRange(loadedProducts);
+                products.Clear();
+                products.AddRange(response.Data);
+                totalPages = (int)Math.Ceiling((double)response.TotalCount / pageSize);
             }
         }
         catch (Exception ex)
@@ -190,7 +207,7 @@
             }
 
             ResetForm();
-            await LoadProductsAsync();
+            await LoadProductsAsync(currentPage);
         }
         catch (Exception ex)
         {
@@ -232,7 +249,7 @@
         {
             await Http.DeleteAsync($"api/Food/DeleteProduct/{id}");
             message = "Product deleted.";
-            await LoadProductsAsync();
+            await LoadProductsAsync(currentPage);
         }
         catch (Exception ex)
         {
@@ -251,6 +268,12 @@
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
+    }
+
+    private sealed class ApiResponse<T>
+    {
+        public List<T> Data { get; set; } = new();
+        public int TotalCount { get; set; }
     }
 
     private sealed class ProductFormModel
