@@ -15,7 +15,9 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<Models.Product>(entityBuilder =>
         {
             entityBuilder.HasKey(p => p.Id);
- 
+            entityBuilder.Property(p => p.Barcode).HasMaxLength(450);
+            entityBuilder.HasIndex(p => p.Barcode).IsUnique();
+
             entityBuilder.Ignore(p => p.EcoscoreData);
             entityBuilder.Ignore(p => p.SelectedImages);
         });

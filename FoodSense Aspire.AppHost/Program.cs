@@ -1,13 +1,13 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var db = builder.AddSqlServer("sql")
-    .AddDatabase("foodsense");
+var localDb = builder.AddConnectionString("db");
 
 var api = builder.AddProject<Projects.FoodSense_API>("foodsense-api")
-    .WithReference(db);
+    .WithReference(localDb);
 
 builder.AddProject<Projects.FoodSense_BlazorFrontend>("blazor-frontend")
     .WithReference(api)
+    .WithEnvironment("ApiBaseUrl", api.GetEndpoint("http"))
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();

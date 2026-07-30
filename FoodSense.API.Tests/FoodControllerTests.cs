@@ -59,6 +59,19 @@ public class FoodControllerTests
     }
 
     [Fact]
+    public async Task CreateProduct_ShouldRejectDuplicateBarcode()
+    {
+        await using var context = CreateContext();
+        context.Products.Add(new Product { Barcode = "111" });
+        await context.SaveChangesAsync();
+
+        var controller = new FoodController(context, null!, null!);
+        var result = await controller.CreateProduct(new Product { Barcode = "111" });
+
+        result.Result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [Fact]
     public async Task UpdateProduct_ShouldUpdateExistingEntity()
     {
         await using var context = CreateContext();

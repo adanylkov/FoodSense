@@ -70,6 +70,17 @@ namespace FoodSense.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
         {
+            if (string.IsNullOrWhiteSpace(product.Barcode))
+            {
+                return BadRequest("Barcode is required.");
+            }
+
+            var barcodeExists = await context.Products.AnyAsync(p => p.Barcode == product.Barcode);
+            if (barcodeExists)
+            {
+                return Conflict("A product with this barcode already exists.");
+            }
+
             await context.Products.AddAsync(product);
             await context.SaveChangesAsync();
 
@@ -79,6 +90,17 @@ namespace FoodSense.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult<Product>> UpdateProduct(int id, [FromBody] Product product)
         {
+            if (string.IsNullOrWhiteSpace(product.Barcode))
+            {
+                return BadRequest("Barcode is required.");
+            }
+
+            var barcodeExists = await context.Products.AnyAsync(p => p.Id != id && p.Barcode == product.Barcode);
+            if (barcodeExists)
+            {
+                return Conflict("A product with this barcode already exists.");
+            }
+
             var dbProduct = await context.Products.FindAsync(id);
             if (dbProduct is null)
             {

@@ -3,6 +3,7 @@ using FoodSense.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodSense.API.Migrations
 {
     [DbContext(typeof(FoodSenseDbContext))]
-    partial class FoodSenseDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729150556_AddBarcodeUniqueness")]
+    partial class AddBarcodeUniqueness
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,8 +76,7 @@ namespace FoodSense.API.Migrations
 
                     b.Property<string>("Barcode")
                         .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Brands")
                         .HasColumnType("nvarchar(max)");
@@ -566,9 +568,6 @@ namespace FoodSense.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Barcode")
-                        .IsUnique();
 
                     b.HasIndex("LanguagesCodesEn", "LanguagesCodesFr", "LanguagesCodesPl");
 
