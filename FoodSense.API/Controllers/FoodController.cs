@@ -12,7 +12,7 @@ namespace FoodSense.API.Controllers
     public class FoodController(FoodSenseDbContext context, IOpenFoodFactsWrapper foodFactsWrapper, IMapper mapper) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
             if (page < 1)
             {
@@ -24,14 +24,15 @@ namespace FoodSense.API.Controllers
                 return BadRequest("Page size must be between 1 and 200.");
             }
 
-            var products = await context.Products
-                .AsNoTracking()
-                .OrderBy(p => p.Id)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var query = context.Products.AsNoTracking().OrderBy(p => p.Id);
+            var totalCount = await query.CountAsync();
+            var products = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-            return Ok(products);
+            return Ok(new ApiResponse<IEnumerable<Product>>
+            {
+                Data = products,
+                TotalCount = totalCount
+            });
         }
 
         [HttpGet("{id:int}")]
@@ -61,11 +62,11 @@ namespace FoodSense.API.Controllers
                 dbProduct = mapper.Map<Product>(productResponse.Product);
                 dbProduct.Barcode = productResponse.Code;
                 await context.Products.AddAsync(dbProduct);
-                await context.SaveChangesAsync();
-            }
+            await context.SaveChangesAsync();
+        }
 
             return Ok(dbProduct);
-        }
+    }
 
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
@@ -73,7 +74,7 @@ namespace FoodSense.API.Controllers
             if (string.IsNullOrWhiteSpace(product.Barcode))
             {
                 return BadRequest("Barcode is required.");
-            }
+}
 
             var barcodeExists = await context.Products.AnyAsync(p => p.Barcode == product.Barcode);
             if (barcodeExists)
@@ -131,3 +132,4 @@ namespace FoodSense.API.Controllers
         }
     }
 }
+

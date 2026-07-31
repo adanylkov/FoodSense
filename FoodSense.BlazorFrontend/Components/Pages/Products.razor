@@ -103,30 +103,30 @@
                                 </div>
                             }
                         </div>
-
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center mt-3">
-                                @if (currentPage > 1)
-                                {
-                                    <li class="page-item">
-                                        <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage - 1))">Previous</button>
-                                    </li>
-                                }
-                                @for (int i = 1; i <= totalPages; i++)
-                                {
-                                    <li class="page-item @(i == currentPage ? "active" : "")">
-                                        <button class="page-link" @onclick="(() => LoadProductsAsync(i))">@i</button>
-                                    </li>
-                                }
-                                @if (currentPage < totalPages)
-                                {
-                                    <li class="page-item">
-                                        <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage + 1))">Next</button>
-                                    </li>
-                                }
-                            </ul>
-                        </nav>
                     }
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mt-3">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage - 1))">Previous</button>
+                                </li>
+                            }
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                int pageNumber = i;
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <button class="page-link" @onclick="(() => LoadProductsAsync(pageNumber))">@i</button>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <button class="page-link" @onclick="(() => LoadProductsAsync(currentPage + 1))">Next</button>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
@@ -160,11 +160,11 @@
 
         try
         {
-            var response = await Http.GetFromJsonAsync<ApiResponse<List<ProductDto>>>($"api/Food/GetProducts?page={currentPage}&pageSize={pageSize}");
+            var response = await Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProducts?page={currentPage}&pageSize={pageSize}");
             if (response != null)
             {
                 products.Clear();
-                products.AddRange(response.Data);
+                products.AddRange(response.Data ?? Enumerable.Empty<ProductDto>());
                 totalPages = (int)Math.Ceiling((double)response.TotalCount / pageSize);
             }
         }
@@ -272,7 +272,7 @@
 
     private sealed class ApiResponse<T>
     {
-        public List<T> Data { get; set; } = new();
+        public T? Data { get; set; }
         public int TotalCount { get; set; }
     }
 
