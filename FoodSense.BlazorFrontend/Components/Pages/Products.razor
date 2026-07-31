@@ -29,10 +29,17 @@
                 <div class="card-body">
                     <h2 class="h5 mb-3">@((editingProductId is null) ? "Create a product" : "Edit product")</h2>
 
+                    @if (formModel is { ImageFrontUrl: not null })
+                    {
+                        <div class="mb-3">
+                            <img src="@formModel.ImageFrontUrl" alt="Product Image" class="img-fluid rounded" />
+                        </div>
+                    }
+
                     <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
                         <div class="mb-3">
                             <label class="form-label">Barcode</label>
-                            <InputText class="form-control" @bind-Value="formModel.Barcode" />
+                            <InputText class="form-control" @bind-Value="formModel.Barcode" @onblur="(e) => HandleBarcodeInput(formModel.Barcode)" />
                         </div>
 
                         <div class="mb-3">
@@ -219,6 +226,32 @@
         }
     }
 
+    private async Task<ProductDto?> GetProductByBarcode(string barcode)
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<ProductDto>($"api/Food/GetProduct/{barcode}");
+            return response;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return null;
+        }
+    }
+
+    private async Task HandleBarcodeInput(string? barcode)
+    {
+        if (!string.IsNullOrWhiteSpace(barcode))
+        {
+            var product = await GetProductByBarcode(barcode);
+            if (product != null)
+            {
+                StartEditing(product);
+            }
+        }
+    }
+
     private void StartEditing(ProductDto product)
     {
         editingProductId = product.Id;
@@ -226,6 +259,7 @@
         formModel.ProductName = product.ProductName;
         formModel.Brands = product.Brands;
         formModel.ProductQuantity = product.ProductQuantity;
+        formModel.ImageFrontUrl = product.ImageFrontUrl;
         message = null;
         error = null;
     }
@@ -268,6 +302,7 @@
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
+        public string? ImageFrontUrl { get; set; }
     }
 
     private sealed class ApiResponse<T>
@@ -282,5 +317,6 @@
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
+        public string? ImageFrontUrl { get; set; }
     }
 }
