@@ -59,14 +59,21 @@ namespace FoodSense.API.Controllers
             var dbProduct = await context.Products.FirstOrDefaultAsync(p => p.Barcode == productResponse.Code);
             if (dbProduct is null)
             {
-                dbProduct = mapper.Map<Product>(productResponse.Product);
-                dbProduct.Barcode = productResponse.Code;
+                dbProduct = new Product
+                {
+                    Barcode = productResponse.Code,
+                    ProductName = productResponse.Product.ProductName,
+                    Brands = productResponse.Product.Brands,
+                    ProductQuantity = productResponse.Product.ProductQuantity,
+                    ImageFrontUrl = productResponse.Product.ImageFrontUrl
+                };
+
                 await context.Products.AddAsync(dbProduct);
-            await context.SaveChangesAsync();
-        }
+                await context.SaveChangesAsync();
+            }
 
             return Ok(dbProduct);
-    }
+        }
 
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
