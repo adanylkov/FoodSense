@@ -1,16 +1,13 @@
-﻿using OpenFoodFactsCSharp.Services;
-using OpenFoodFactsCSharp.Services.Interfaces;
-
-namespace FoodSense.Extensions;
+﻿namespace FoodSense.Extensions;
 
 public static class ServicesExtensions
 {
     public static IServiceCollection AddOpenFoodFactsClient(this IServiceCollection services)
     {
-        services.AddSingleton<IOpenFoodFactsWrapper, OpenFoodFactsWrapperImpl>(implementationFactory =>
+        services.AddHttpClient<IOpenFoodFactsClient, OpenFoodFactsClient>(client =>
         {
-            var client = new HttpClient();
-            return new OpenFoodFactsWrapperImpl(new OpenFoodFactsCSharp.Clients.OpenFoodFactsApiLowLevelClient(client));
+            client.BaseAddress = new Uri("https://world.openfoodfacts.org/");
+            client.DefaultRequestHeaders.Add("User-Agent", "MyFoodApp/1.0 (danilkovxp@gmail.com)");
         });
 
         return services;

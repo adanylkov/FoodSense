@@ -13,10 +13,6 @@ builder.Services.AddSwaggerGen();
 
 builder.AddSqlServerDbContext<FoodSenseDbContext>("foodsense");
 builder.Services.AddOpenFoodFactsClient();
-builder.Services.AddAutoMapper((config) => {
-
-    }, Assembly.GetExecutingAssembly());
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorFrontend", policy =>

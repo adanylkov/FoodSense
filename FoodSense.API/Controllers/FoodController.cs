@@ -1,15 +1,13 @@
-using AutoMapper;
 using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenFoodFactsCSharp.Services.Interfaces;
 
 namespace FoodSense.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class FoodController(FoodSenseDbContext context, IOpenFoodFactsWrapper foodFactsWrapper, IMapper mapper) : ControllerBase
+    public class FoodController(FoodSenseDbContext context, IOpenFoodFactsClient foodFactsClient) : ControllerBase
     {
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
@@ -50,22 +48,30 @@ namespace FoodSense.API.Controllers
         [HttpGet("{barcode:long}")]
         public async Task<IActionResult> GetProduct(long barcode)
         {
-            var productResponse = await foodFactsWrapper.FetchProductByCodeAsync(barcode.ToString());
-            if (productResponse.Status is not true || productResponse.Product is null)
+            var productResponse = await foodFactsClient.GetProductByBarcodeAsync(barcode);
+            if (productResponse is null)
             {
                 return NotFound();
             }
 
-            var dbProduct = await context.Products.FirstOrDefaultAsync(p => p.Barcode == productResponse.Code);
+            var dbProduct = await context.Products.FirstOrDefaultAsync(p => p.Barcode == barcode.ToString());
             if (dbProduct is null)
             {
                 dbProduct = new Product
                 {
-                    Barcode = productResponse.Code,
-                    ProductName = productResponse.Product.ProductName,
-                    Brands = productResponse.Product.Brands,
-                    ProductQuantity = productResponse.Product.ProductQuantity,
-                    ImageFrontUrl = productResponse.Product.ImageFrontUrl
+                    Barcode = barcode.ToString(),
+                    ProductName = productResponse.Name,
+                    FrontImageUrl = productResponse.ImageUrl,
+                    Nutrients = new Nutrients
+                    {
+                        Carbohydrates = productResponse.Nutrients.Carbohydrates,
+                        EnergyKcal = productResponse.Nutrients.Calories,
+                        Fat = productResponse.Nutrients.Fat,
+                        Proteins = productResponse.Nutrients.Proteins,
+                        Salt = productResponse.Nutrients.Salt,
+                        SaturatedFat = productResponse.Nutrients.SaturatedFat,
+                        Sugars = productResponse.Nutrients.Sugars
+                    }
                 };
 
                 await context.Products.AddAsync(dbProduct);
@@ -81,7 +87,7 @@ namespace FoodSense.API.Controllers
             if (string.IsNullOrWhiteSpace(product.Barcode))
             {
                 return BadRequest("Barcode is required.");
-}
+            }
 
             var barcodeExists = await context.Products.AnyAsync(p => p.Barcode == product.Barcode);
             if (barcodeExists)
@@ -139,4 +145,3 @@ namespace FoodSense.API.Controllers
         }
     }
 }
-

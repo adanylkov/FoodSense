@@ -30,7 +30,7 @@
                     <h2 class="h5 mb-3">@((editingProductId is null) ? "Create a product" : "Edit product")</h2>
 
                     <div class="mb-3">
-                        <img src="@GetImageSource(formModel.ImageFrontUrl)" alt="Product Image" class="img-fluid rounded" />
+                        <img src="@GetImageSource(formModel.FrontImageUrl)" alt="Product Image" class="img-fluid rounded" />
                     </div>
 
                     <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
@@ -91,7 +91,7 @@
                             {
                                 <div class="col">
                                     <div class="card h-100">
-                                        <img src="@GetImageSource(product.ImageFrontUrl)" alt="@product.ProductName" class="card-img-top" style="height: 200px; object-fit: cover;" />
+                                        <img src="@GetImageSource(product.FrontImageUrl)" alt="@product.ProductName" class="card-img-top" style="height: 200px; object-fit: cover;" />
                                         <div class="card-body">
                                             <h5 class="card-title">@product.ProductName</h5>
                                             <p class="card-text"><strong>Barcode:</strong> @product.Barcode</p>
@@ -200,7 +200,7 @@
                 ProductName = formModel.ProductName,
                 Brands = formModel.Brands,
                 ProductQuantity = formModel.ProductQuantity,
-                ImageFrontUrl = formModel.ImageFrontUrl
+                FrontImageUrl = formModel.FrontImageUrl
             };
 
             if (editingProductId is null)
@@ -260,7 +260,7 @@
         formModel.ProductName = product.ProductName;
         formModel.Brands = product.Brands;
         formModel.ProductQuantity = product.ProductQuantity;
-        formModel.ImageFrontUrl = product.ImageFrontUrl;
+        formModel.FrontImageUrl = product.FrontImageUrl;
         message = null;
         error = null;
     }
@@ -275,7 +275,7 @@
         formModel.ProductName = string.Empty;
         formModel.Brands = string.Empty;
         formModel.ProductQuantity = string.Empty;
-        formModel.ImageFrontUrl = null;
+        formModel.FrontImageUrl = null;
     }
 
     private async Task DeleteProduct(int id)
@@ -307,7 +307,7 @@
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
-        public string? ImageFrontUrl { get; set; }
+        public string? FrontImageUrl { get; set; }
     }
 
     private sealed class ApiResponse<T>
@@ -322,6 +322,6 @@
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
-        public string? ImageFrontUrl { get; set; }
+        public string? FrontImageUrl { get; set; }
     }
 }
