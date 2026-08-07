@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\openfoodfacts-csharp\openfoodfacts-csharp\OpenFoodFacts-CSharp.csproj" />
+    <ProjectReference Include="C:\Users\danil\source\repos\openfoodfacts-csharp\openfoodfacts-csharp\OpenFoodFacts-CSharp.csproj" />
   </ItemGroup>
 
 </Project>

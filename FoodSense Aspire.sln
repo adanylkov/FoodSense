@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodSense.API", "FoodSense.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodSense.API.Tests", "FoodSense.API.Tests\FoodSense.API.Tests.csproj", "{883A9638-6BC8-4F54-B6DE-AC9A2BC2CB2D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenFoodFacts-CSharp", "..\..\openfoodfacts-csharp\openfoodfacts-csharp\OpenFoodFacts-CSharp.csproj", "{68814070-1FB6-4F61-A4AF-547A6CFD233C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenFoodFacts-CSharp", "C:\Users\danil\source\repos\openfoodfacts-csharp\openfoodfacts-csharp\OpenFoodFacts-CSharp.csproj", "{68814070-1FB6-4F61-A4AF-547A6CFD233C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodSense.ReceiptReader", "FoodSense.ReceiptReader\FoodSense.ReceiptReader.csproj", "{105A2074-A36D-43F3-8CC5-49C0E060C3FD}"
 EndProject
