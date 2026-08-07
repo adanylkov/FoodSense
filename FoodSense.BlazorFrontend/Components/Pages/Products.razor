@@ -29,12 +29,9 @@
                 <div class="card-body">
                     <h2 class="h5 mb-3">@((editingProductId is null) ? "Create a product" : "Edit product")</h2>
 
-                    @if (formModel is { ImageFrontUrl: not null })
-                    {
-                        <div class="mb-3">
-                            <img src="@formModel.ImageFrontUrl" alt="Product Image" class="img-fluid rounded" />
-                        </div>
-                    }
+                    <div class="mb-3">
+                        <img src="@GetImageSource(formModel.ImageFrontUrl)" alt="Product Image" class="img-fluid rounded" />
+                    </div>
 
                     <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
                         <div class="mb-3">
@@ -94,6 +91,7 @@
                             {
                                 <div class="col">
                                     <div class="card h-100">
+                                        <img src="@GetImageSource(product.ImageFrontUrl)" alt="@product.ProductName" class="card-img-top" style="height: 200px; object-fit: cover;" />
                                         <div class="card-body">
                                             <h5 class="card-title">@product.ProductName</h5>
                                             <p class="card-text"><strong>Barcode:</strong> @product.Barcode</p>
@@ -141,6 +139,8 @@
 </div>
 
 @code {
+    private const string PlaceholderImagePath = "/images/product-placeholder.svg";
+
     private readonly List<ProductDto> products = [];
     private readonly ProductFormModel formModel = new();
     private int? editingProductId;
@@ -199,7 +199,8 @@
                 Barcode = formModel.Barcode,
                 ProductName = formModel.ProductName,
                 Brands = formModel.Brands,
-                ProductQuantity = formModel.ProductQuantity
+                ProductQuantity = formModel.ProductQuantity,
+                ImageFrontUrl = formModel.ImageFrontUrl
             };
 
             if (editingProductId is null)
@@ -264,6 +265,9 @@
         error = null;
     }
 
+    private string GetImageSource(string? imageUrl)
+        => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
+
     private void ResetForm()
     {
         editingProductId = null;
@@ -271,6 +275,7 @@
         formModel.ProductName = string.Empty;
         formModel.Brands = string.Empty;
         formModel.ProductQuantity = string.Empty;
+        formModel.ImageFrontUrl = null;
     }
 
     private async Task DeleteProduct(int id)
