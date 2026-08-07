@@ -91,6 +91,36 @@ public class FoodControllerTests
     }
 
     [Fact]
+    public async Task UpdateProduct_ShouldPersistOwnedNutrientsChanges()
+    {
+        await using var context = CreateContext();
+        var existing = new Product
+        {
+            Barcode = "111",
+            Nutrients = new Nutrients { EnergyKcal = 100, Fat = 1 }
+        };
+        context.Products.Add(existing);
+        await context.SaveChangesAsync();
+
+        var controller = new FoodController(context, null!);
+        var updated = new Product
+        {
+            Barcode = "222",
+            Nutrients = new Nutrients { EnergyKcal = 250, Fat = 5, SaturatedFat = 2, Carbohydrates = 30, Sugars = 10, Proteins = 12, Salt = 1.5 }
+        };
+
+        var result = await controller.UpdateProduct(existing.Id, updated);
+
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var dbProduct = await context.Products.FindAsync(existing.Id);
+        dbProduct.Should().NotBeNull();
+        dbProduct!.Barcode.Should().Be("222");
+        dbProduct.Nutrients.EnergyKcal.Should().Be(250);
+        dbProduct.Nutrients.Fat.Should().Be(5);
+        dbProduct.Nutrients.Salt.Should().Be(1.5);
+    }
+
+    [Fact]
     public async Task DeleteProduct_ShouldRemoveEntity()
     {
         await using var context = CreateContext();

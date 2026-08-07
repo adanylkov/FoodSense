@@ -123,6 +123,7 @@ namespace FoodSense.API.Controllers
 
             product.Id = id;
             context.Entry(dbProduct).CurrentValues.SetValues(product);
+            dbProduct.Nutrients = product.Nutrients ?? new Nutrients();
 
             await context.SaveChangesAsync();
 
