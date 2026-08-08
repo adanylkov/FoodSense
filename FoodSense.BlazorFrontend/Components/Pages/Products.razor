@@ -3,99 +3,156 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 
-<PageTitle>Products</PageTitle>
+<PageTitle>FoodSense - Product Catalog</PageTitle>
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Page Header / Banner -->
+<div class="bg-body-tertiary border mb-4 rounded-4 p-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
-            <h1 class="h3 mb-1">Products</h1>
-            <p class="text-muted mb-0">Create, edit, and remove products through the API.</p>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 mb-2 fw-semibold">
+                Inventory Management
+            </span>
+            <h1 class="h3 fw-bold text-dark mb-1">Product Catalog & Nutrition Engine</h1>
+            <p class="text-secondary small mb-0">Create, edit, and audit food products and nutritional data in real-time.</p>
         </div>
     </div>
+</div>
 
+<!-- Main Workspace -->
+<div>
+    <!-- Status Alerts -->
     @if (!string.IsNullOrWhiteSpace(message))
     {
-        <div class="alert alert-success">@message</div>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <strong>Success!</strong> @message
+            </div>
+            <button type="button" class="btn-close" @onclick="() => message = null" aria-label="Close"></button>
+        </div>
     }
 
     @if (!string.IsNullOrWhiteSpace(error))
     {
-        <div class="alert alert-danger">@error</div>
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <strong>Error:</strong> @error
+            </div>
+            <button type="button" class="btn-close" @onclick="() => error = null" aria-label="Close"></button>
+        </div>
     }
 
     <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">@((editingProductId is null) ? "Create a product" : "Edit product")</h2>
+        <!-- Sidebar Form Column -->
+        <aside class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                    <h2 class="h5 fw-bold mb-0">
+                        @((editingProductId is null) ? "Create New Product" : "Edit Product")
+                    </h2>
+                    <p class="text-secondary small">Enter barcode to auto-populate details.</p>
+                </div>
 
-                    <div class="mb-3">
-                        <img src="@GetImageSource(formModel.FrontImageUrl)" alt="Product Image"
-                             class="img-fluid rounded" />
+                <div class="card-body p-4">
+                    <!-- Image Preview Box -->
+                    <div class="bg-body-tertiary rounded-3 p-3 text-center mb-3 border border-dashed">
+                        <img src="@GetImageSource(formModel.FrontImageUrl)" 
+                             alt="Product Preview"
+                             class="img-fluid rounded-3 object-fit-contain" 
+                             style="max-height: 160px;" />
                     </div>
 
                     <EditForm Model="formModel" OnValidSubmit="HandleSubmit">
                         <div class="mb-3">
-                            <label class="form-label">Barcode</label>
-                            <InputText class="form-control" @bind-Value="formModel.Barcode"
+                            <label for="barcodeInput" class="form-label small fw-semibold">Barcode</label>
+                            <InputText id="barcodeInput" 
+                                       class="form-control rounded-3" 
+                                       placeholder="e.g. 5449000000996"
+                                       @bind-Value="formModel.Barcode"
                                        @onblur="(e) => HandleBarcodeInput(formModel.Barcode)" />
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <InputText class="form-control" @bind-Value="formModel.ProductName" />
+                            <label for="productNameInput" class="form-label small fw-semibold">Product Name</label>
+                            <InputText id="productNameInput" class="form-control rounded-3" placeholder="Item title" @bind-Value="formModel.ProductName" />
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Brands</label>
-                            <InputText class="form-control" @bind-Value="formModel.Brands" />
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="brandsInput" class="form-label small fw-semibold">Brands</label>
+                                <InputText id="brandsInput" class="form-control rounded-3" placeholder="Brand name" @bind-Value="formModel.Brands" />
+                            </div>
+                            <div class="col-6">
+                                <label for="quantityInput" class="form-label small fw-semibold">Quantity</label>
+                                <InputText id="quantityInput" class="form-control rounded-3" placeholder="e.g. 500g" @bind-Value="formModel.ProductQuantity" />
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Quantity</label>
-                            <InputText class="form-control" @bind-Value="formModel.ProductQuantity" />
-                        </div>
-
-                        <div class="mb-3 mt-3">
-                            <label class="form-label">Nutrients</label>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Energy (kcal)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.EnergyKcal" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Fat (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.Fat" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Saturated Fat (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.SaturatedFat" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Carbohydrates (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.Carbohydrates" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Sugars (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.Sugars" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Proteins (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.Proteins" />
-                            </div>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Salt (g)</span>
-                                <InputNumber class="form-control" @bind-Value="formModel.Nutrients.Salt" />
+                        <!-- Accordion Form Section for Nutrients -->
+                        <div class="accordion mb-4" id="formNutrientAccordion">
+                            <div class="accordion-item border rounded-3 overflow-hidden">
+                                <h3 class="accordion-header" id="formNutrientHeader">
+                                    <button class="accordion-button collapsed bg-body-tertiary shadow-none py-2 px-3 small fw-semibold text-dark" 
+                                            type="button" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#formNutrientCollapse" 
+                                            aria-expanded="false" 
+                                            aria-controls="formNutrientCollapse">
+                                        Nutritional Information
+                                    </button>
+                                </h3>
+                                <div id="formNutrientCollapse" class="accordion-collapse collapse" aria-labelledby="formNutrientHeader">
+                                    <div class="accordion-body p-3 bg-white">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Energy (kcal)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.EnergyKcal" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Fat (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.Fat" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Sat. Fat (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.SaturatedFat" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Carbs (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.Carbohydrates" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Sugars (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.Sugars" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label extra-small text-secondary mb-1">Proteins (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.Proteins" />
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label extra-small text-secondary mb-1">Salt (g)</label>
+                                                <InputNumber class="form-control form-control-sm" @bind-Value="formModel.Nutrients.Salt" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="d-flex gap-2">
-                            <button class="btn btn-primary" type="submit" disabled="@isSaving">
-                                @((isSaving) ? "Saving..." : "Save")
+                            <button class="btn btn-primary w-100 rounded-3 py-2 fw-semibold" type="submit" disabled="@isSaving">
+                                @if (isSaving)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                    <span>Saving...</span>
+                                }
+                                else
+                                {
+                                    <span>Save Product</span>
+                                }
                             </button>
 
                             @if (editingProductId is not null)
                             {
-                                <button class="btn btn-outline-secondary" type="button" @onclick="ResetForm">
+                                <button class="btn btn-light border w-100 rounded-3 py-2 text-secondary fw-semibold" type="button" @onclick="ResetForm">
                                     Cancel
                                 </button>
                             }
@@ -103,127 +160,197 @@
                     </EditForm>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">Existing products</h2>
+        <!-- Product Cards Grid Column -->
+        <section class="col-lg-8" aria-labelledby="catalog-heading">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 id="catalog-heading" class="h5 fw-bold mb-0">Existing Catalog</h2>
+                <span class="badge bg-body-tertiary text-secondary border px-3 py-2 rounded-pill fw-normal">
+                    Page @currentPage of @(totalPages == 0 ? 1 : totalPages)
+                </span>
+            </div>
 
-                    @if (isLoading)
+            @if (isLoading)
+            {
+                <div class="text-center py-5 my-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading products...</span>
+                    </div>
+                    <p class="text-secondary">Fetching product database...</p>
+                </div>
+            }
+            else if (!products.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+                    <div class="card-body">
+                        <h3 class="h5 fw-bold mb-2">No Products Found</h3>
+                        <p class="text-secondary mb-0">Use the form on the left to add your first food item.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    @foreach (var product in products)
                     {
-                        <p class="text-muted">Loading products...</p>
-                    }
-                    else if (!products.Any())
-                    {
-                        <p class="text-muted">No products found yet.</p>
-                    }
-                    else
-                    {
-                        <div class="row row-cols-1 row-cols-md-3 g-4">
-                            @foreach (var product in products)
-                            {
-                                <div class="col">
-                                    <div class="card h-100">
-                                        <img src="@GetImageSource(product.FrontImageUrl)" alt="@product.ProductName"
-                                             class="card-img-top" style="height: 200px; object-fit: cover;" />
-                                        <div class="card-body">
-                                            <h5 class="card-title">@product.ProductName</h5>
-                                            <p class="card-text mb-1"><strong>Barcode:</strong> @product.Barcode</p>
-                                            <p class="card-text mb-1"><strong>Brands:</strong> @product.Brands</p>
-                                            <p class="card-text mb-1"><strong>Quantity:</strong> @product.ProductQuantity</p>
-                                        </div>
+                        <div class="col">
+                            <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column">
+                                <div class="position-relative bg-body-tertiary text-center p-3">
+                                    <img src="@GetImageSource(product.FrontImageUrl)" 
+                                         alt="@product.ProductName"
+                                         class="card-img-top object-fit-contain" 
+                                         style="height: 180px;" />
+                                    <span class="position-absolute top-0 end-0 m-3 badge bg-white text-dark border shadow-sm rounded-pill">
+                                        @product.ProductQuantity
+                                    </span>
+                                </div>
 
-                                        <!-- Accordion for Nutrients -->
-                                        <div class="accordion" id="nutrientAccordion">
-                                            <div class="accordion-item">
-                                                <h2 class="accordion-header" id="nutrientHeader">
-                                                    <button class="accordion-button collapsed" type="button"
-                                                            data-bs-toggle="collapse" data-bs-target="#nutrientBody"
-                                                            aria-expanded="false" aria-controls="nutrientBody">
-                                                        Nutrients
-                                                    </button>
-                                                </h2>
-                                                <!-- Outer div handles the collapse animation -->
-                                                <div id="nutrientBody" class="accordion-collapse collapse">
-                                                    <!-- Inner div handles the padding and content -->
-                                                    <div class="accordion-body">
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Energy (kcal):</span>
-                                                            <strong>@product.Nutrients.EnergyKcal</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Fat (g):</span>
-                                                            <strong>@product.Nutrients.Fat</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Saturated Fat (g):</span>
-                                                            <strong>@product.Nutrients.SaturatedFat</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Carbohydrates (g):</span>
-                                                            <strong>@product.Nutrients.Carbohydrates</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Sugars (g):</span>
-                                                            <strong>@product.Nutrients.Sugars</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Proteins (g):</span>
-                                                            <strong>@product.Nutrients.Proteins</strong>
-                                                        </div>
-                                                        <div class="mb-1">
-                                                            <span class="text-secondary">Salt (g):</span>
-                                                            <strong>@product.Nutrients.Salt</strong>
-                                                        </div>
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <span class="text-secondary extra-small fw-semibold text-uppercase mb-1">@product.Brands</span>
+                                    <h3 class="h6 card-title fw-bold text-dark mb-2 text-truncate">@product.ProductName</h3>
+                                    <p class="card-text small text-secondary mb-3">
+                                        <strong>Barcode:</strong> <code>@product.Barcode</code>
+                                    </p>
+
+                                    <!-- Unique Accordion Instance Per Product -->
+                                    <div class="accordion mt-auto mb-3" id="@($"nutrientAccordion-{product.Id}")">
+                                        <div class="accordion-item border-0 bg-body-tertiary rounded-3 overflow-hidden">
+                                            <h4 class="accordion-header" id="@($"nutrientHeader-{product.Id}")">
+                                                <button class="accordion-button collapsed shadow-none bg-body-tertiary p-2 px-3 small fw-semibold text-secondary" 
+                                                        type="button"
+                                                        data-bs-toggle="collapse" 
+                                                        data-bs-target="@($"#nutrientBody-{product.Id}")"
+                                                        aria-expanded="false" 
+                                                        aria-controls="@($"nutrientBody-{product.Id}")">
+                                                    Nutritional Value
+                                                </button>
+                                            </h4>
+                                            <div id="@($"nutrientBody-{product.Id}")" class="accordion-collapse collapse">
+                                                <div class="accordion-body p-3 bg-white border-top extra-small">
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Energy:</span>
+                                                        <span class="fw-bold">@product.Nutrients.EnergyKcal kcal</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Fat:</span>
+                                                        <span class="fw-bold">@product.Nutrients.Fat g</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Saturated Fat:</span>
+                                                        <span class="fw-bold">@product.Nutrients.SaturatedFat g</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Carbohydrates:</span>
+                                                        <span class="fw-bold">@product.Nutrients.Carbohydrates g</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Sugars:</span>
+                                                        <span class="fw-bold">@product.Nutrients.Sugars g</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span class="text-secondary">Proteins:</span>
+                                                        <span class="fw-bold">@product.Nutrients.Proteins g</span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="text-secondary">Salt:</span>
+                                                        <span class="fw-bold">@product.Nutrients.Salt g</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="card-footer mt-auto">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <button class="btn btn-outline-primary btn-sm" type="button"
-                                                        @onclick="(() => StartEditing(product))">Edit</button>
-                                                <button class="btn btn-outline-danger btn-sm" type="button"
-                                                        @onclick="(() => DeleteProduct(product.Id))">Delete</button>
-                                            </div>
-                                        </div>
+                                    <!-- Card Actions -->
+                                    <div class="d-flex gap-2 border-top pt-3">
+                                        <button class="btn btn-light-subtle border text-primary btn-sm w-100 rounded-3 fw-semibold" 
+                                                type="button"
+                                                @onclick="(() => StartEditing(product))">
+                                            Edit
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm w-100 rounded-3 fw-semibold" 
+                                                type="button"
+                                                @onclick="(() => PromptDelete(product.Id))">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
-                            }
+                            </article>
                         </div>
                     }
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center mt-3">
-                            @if (currentPage > 1)
-                            {
-                                <li class="page-item">
-                                    <button class="page-link"
-                                            @onclick="(() => LoadProductsAsync(currentPage - 1))">Previous</button>
-                                </li>
-                            }
-                            @for (int i = 1; i <= totalPages; i++)
-                            {
-                                int pageNumber = i;
-                                <li class="page-item @(i == currentPage ? "active" : "")">
-                                    <button class="page-link" @onclick="(() => LoadProductsAsync(pageNumber))">@i</button>
-                                </li>
-                            }
-                            @if (currentPage < totalPages)
-                            {
-                                <li class="page-item">
-                                    <button class="page-link"
-                                            @onclick="(() => LoadProductsAsync(currentPage + 1))">Next</button>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
+                </div>
+
+                <!-- Pagination Navigation -->
+                <nav aria-label="Product pagination" class="mt-4">
+                    <ul class="pagination justify-content-center gap-1">
+                        <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                            <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                                    @onclick="(() => LoadProductsAsync(currentPage - 1))"
+                                    disabled="@(currentPage <= 1)">
+                                Previous
+                            </button>
+                        </li>
+
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            int pageNumber = i;
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <button class="page-link rounded-3 border-0 shadow-sm px-3" @onclick="(() => LoadProductsAsync(pageNumber))">
+                                    @i
+                                </button>
+                            </li>
+                        }
+
+                        <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                            <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                                    @onclick="(() => LoadProductsAsync(currentPage + 1))"
+                                    disabled="@(currentPage >= totalPages)">
+                                Next
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </section>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (productToDeleteId.HasValue)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4 p-2">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" @onclick="CancelDelete" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <p class="text-secondary mb-0">Are you sure you want to delete this product? This operation cannot be reversed.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" @onclick="CancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-3 px-4 fw-semibold" @onclick="ExecuteDelete">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                            <span>Deleting...</span>
+                        }
+                        else
+                        {
+                            <span>Delete</span>
+                        }
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+<style>
+    .extra-small { font-size: 0.75rem; }
+    .border-dashed { border-style: dashed !important; }
+</style>
 
 @code {
     private const string PlaceholderImagePath = "/images/product-placeholder.svg";
@@ -231,6 +358,7 @@
     private readonly List<ProductDto> products = [];
     private readonly ProductFormModel formModel = new();
     private int? editingProductId;
+    private int? productToDeleteId;
     private bool isLoading;
     private bool isSaving;
     private string? message;
@@ -254,8 +382,7 @@
 
         try
         {
-            var response = await
-Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProducts?page={currentPage}&pageSize={pageSize}");
+            var response = await Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProducts?page={currentPage}&pageSize={pageSize}");
             if (response != null)
             {
                 products.Clear();
@@ -288,18 +415,28 @@ Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProduc
                 ProductName = formModel.ProductName,
                 Brands = formModel.Brands,
                 ProductQuantity = formModel.ProductQuantity,
-                FrontImageUrl = formModel.FrontImageUrl
+                FrontImageUrl = formModel.FrontImageUrl,
+                Nutrients = formModel.Nutrients
             };
 
             if (editingProductId is null)
             {
-                await Http.PostAsJsonAsync("api/Food/CreateProduct", payload);
-                message = "Product created.";
+                var response = await Http.PostAsJsonAsync("api/Food/CreateProduct", payload);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    message = $"Failed to create product: {error}";
+                }
+
+                else
+                {
+                    message = "Product created successfully.";
+                }
             }
             else
             {
                 await Http.PutAsJsonAsync($"api/Food/UpdateProduct/{editingProductId}", payload);
-                message = "Product updated.";
+                message = "Product updated successfully.";
             }
 
             ResetForm();
@@ -349,6 +486,7 @@ Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProduc
         formModel.Brands = product.Brands;
         formModel.ProductQuantity = product.ProductQuantity;
         formModel.FrontImageUrl = product.FrontImageUrl;
+        formModel.Nutrients = product.Nutrients ?? new Nutrients();
         message = null;
         error = null;
     }
@@ -364,18 +502,32 @@ Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProduc
         formModel.Brands = string.Empty;
         formModel.ProductQuantity = string.Empty;
         formModel.FrontImageUrl = null;
+        formModel.Nutrients = new Nutrients();
     }
 
-    private async Task DeleteProduct(int id)
+    private void PromptDelete(int id)
     {
+        productToDeleteId = id;
+    }
+
+    private void CancelDelete()
+    {
+        productToDeleteId = null;
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (!productToDeleteId.HasValue) return;
+
         isSaving = true;
         message = null;
         error = null;
 
         try
         {
-            await Http.DeleteAsync($"api/Food/DeleteProduct/{id}");
-            message = "Product deleted.";
+            await Http.DeleteAsync($"api/Food/DeleteProduct/{productToDeleteId.Value}");
+            message = "Product deleted successfully.";
+            productToDeleteId = null;
             await LoadProductsAsync(currentPage);
         }
         catch (Exception ex)
@@ -416,7 +568,7 @@ Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProduc
         public string ProductName { get; set; } = string.Empty;
         public string Brands { get; set; } = string.Empty;
         public string ProductQuantity { get; set; } = string.Empty;
-        public string? FrontImageUrl { get; set; }
+        public string? FrontImageUrl { get; set; } = PlaceholderImagePath;
         public Nutrients Nutrients { get; set; } = new();
     }
 
@@ -425,5 +577,4 @@ Http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>($"api/Food/GetProduc
         public T? Data { get; set; }
         public int TotalCount { get; set; }
     }
-
 }

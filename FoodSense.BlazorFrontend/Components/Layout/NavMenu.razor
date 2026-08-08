@@ -1,24 +1,36 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">FoodSense</a>
+﻿<div class="navbar navbar-expand-lg navbar-dark px-4">
+    <a class="navbar-brand d-flex align-items-center" href="">
+        <span class="brand-icon me-2">FS</span>
+        <span class="brand-text">FoodSense</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu" aria-expanded="@(!collapseNavMenu)" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse @(collapseNavMenu ? "" : "show")" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link px-3 d-flex" href="" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu me-2" aria-hidden="true"></span> 
+                    <span>Home</span>
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link px-3 d-flex" href="products">
+                    <span class="bi bi-box-seam-nav-menu me-2" aria-hidden="true"></span> 
+                    <span>Products</span>
+                </NavLink>
+            </li>
+        </ul>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@code {
+    private bool collapseNavMenu = true;
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="products">
-                <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Products
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}
