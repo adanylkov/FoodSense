@@ -16,6 +16,8 @@ builder.AddSqlServerDbContext<FoodSenseDbContext>("foodsense");
 builder.Services.AddOpenFoodFactsClient();
 builder.Services.AddScoped<IProductRepository, ProductRepository>(); 
 builder.Services.AddScoped<IProductService, ProductService>(); 
+builder.Services.AddScoped<IPantryRepository, PantryRepository>();
+builder.Services.AddScoped<IPantryService, PantryService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorFrontend", policy =>

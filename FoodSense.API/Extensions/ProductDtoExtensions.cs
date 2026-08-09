@@ -22,7 +22,26 @@ public static class ProductDtoExtensions
                 Sugars = product.Nutrients.Sugars,
                 Proteins = product.Nutrients.Proteins,
                 Salt = product.Nutrients.Salt
-            }
+            },
+            PantryItems = product.PantryItems.ToPantryItemDtos()
+        };
+    }
+
+    public static IEnumerable<PantryItemDto> ToPantryItemDtos(this IEnumerable<PantryItem> pantryItems)
+    {
+        return pantryItems.Select(p => p.ToDto());
+    }  
+
+    public static PantryItemDto ToDto(this PantryItem pantryItem)
+    {
+        return new PantryItemDto
+        {
+            Id = pantryItem.Id,
+            ProductId = pantryItem.ProductId,
+            Quantity = pantryItem.Quantity,
+            UserId = pantryItem.UserId,
+            AddedAt = pantryItem.AddedAt,
+            UpdatedAt = pantryItem.UpdatedAt
         };
     }
 

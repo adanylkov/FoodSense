@@ -20,4 +20,5 @@ public sealed record ProductDto
     public string ProductQuantity { get; set; } = string.Empty;
     public string? FrontImageUrl { get; set; }
     public NutrientsDto Nutrients { get; set; } = new();
+    public IEnumerable<PantryItemDto> PantryItems { get; set; } = new List<PantryItemDto>();
 }

@@ -24,6 +24,7 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
             .OrderBy(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Include(p => p.PantryItems)
             .ToListAsync();
     }
 
@@ -34,12 +35,12 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
 
     public async Task<Product?> GetByIdAsync(int id)
     {
-        return await context.Products.FindAsync(id);
+        return await context.Products.Include(p => p.PantryItems).FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<Product?> GetByBarcodeAsync(string barcode)
     {
-        return await context.Products.FirstOrDefaultAsync(p => p.Barcode == barcode);
+        return await context.Products.Include(p => p.PantryItems).FirstOrDefaultAsync(p => p.Barcode == barcode);
     }
 
     public async Task AddAsync(Product product)
