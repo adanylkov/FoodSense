@@ -1,5 +1,7 @@
 using FoodSense.API.Data.Models;
+using FoodSense.API.Extensions;
 using FoodSense.API.Services;
+using FoodSense.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 namespace FoodSense.API.Controllers
 {
@@ -22,9 +24,9 @@ namespace FoodSense.API.Controllers
 
             var products = await productService.GetProductsAsync(page, pageSize);
             var totalCount = await productService.GetTotalProductCountAsync();
-            return Ok(new ApiResponse<IEnumerable<Product>>
+            return Ok(new ApiResponse<IEnumerable<ProductDto>>
             {
-                Data = products,
+                Data = products.ToProductDtos(),
                 TotalCount = totalCount
             });
         }
@@ -34,7 +36,7 @@ namespace FoodSense.API.Controllers
         {
             var product = await productService.GetProductByIdAsync(id);
             if (product is null) return NotFound();
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         [HttpGet("{barcode:long}")]
@@ -42,7 +44,7 @@ namespace FoodSense.API.Controllers
         {
             var product = await productService.GetProductByBarcodeOrFetchAsync(barcode);
             if (product is null) return NotFound();
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         [HttpPost]

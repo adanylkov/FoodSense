@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodSense.ReceiptReader.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodSense.BlazorFrontend", "FoodSense.BlazorFrontend\FoodSense.BlazorFrontend.csproj", "{8D6A43A4-803E-4FAC-8E55-739A19F5289F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodSense.Common", "FoodSense.Common\FoodSense.Common.csproj", "{0276423C-14C4-4A39-BB46-D06E94789F5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{8D6A43A4-803E-4FAC-8E55-739A19F5289F}.Release|x64.Build.0 = Release|Any CPU
 		{8D6A43A4-803E-4FAC-8E55-739A19F5289F}.Release|x86.ActiveCfg = Release|Any CPU
 		{8D6A43A4-803E-4FAC-8E55-739A19F5289F}.Release|x86.Build.0 = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|x64.Build.0 = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Debug|x86.Build.0 = Debug|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|x64.ActiveCfg = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|x64.Build.0 = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|x86.ActiveCfg = Release|Any CPU
+		{0276423C-14C4-4A39-BB46-D06E94789F5F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

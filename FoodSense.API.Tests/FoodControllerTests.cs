@@ -4,6 +4,7 @@ using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
 using FoodSense.API.Repositories;
 using FoodSense.API.Services;
+using FoodSense.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +31,7 @@ public class FoodControllerTests
 
         var result = await controller.GetProducts(page: 2, pageSize: 25);
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<Product>>>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductDto>>>().Subject;
         var products = response.Data;
 
         products.Should().HaveCount(25);
