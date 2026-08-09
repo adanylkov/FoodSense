@@ -1,13 +1,11 @@
-using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
+using FoodSense.API.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
 namespace FoodSense.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class FoodController(FoodSenseDbContext context, IOpenFoodFactsClient foodFactsClient) : ControllerBase
+    public class FoodController(IProductService productService) : ControllerBase
     {
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
@@ -22,10 +20,8 @@ namespace FoodSense.API.Controllers
                 return BadRequest("Page size must be between 1 and 200.");
             }
 
-            var query = context.Products.AsNoTracking().OrderBy(p => p.Id);
-            var totalCount = await query.CountAsync();
-            var products = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
-
+            var products = await productService.GetProductsAsync(page, pageSize);
+            var totalCount = await productService.GetTotalProductCountAsync();
             return Ok(new ApiResponse<IEnumerable<Product>>
             {
                 Data = products,
@@ -36,49 +32,17 @@ namespace FoodSense.API.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Product>> GetProductById(int id)
         {
-            var product = await context.Products.FindAsync(id);
-            if (product is null)
-            {
-                return NotFound();
-            }
-
+            var product = await productService.GetProductByIdAsync(id);
+            if (product is null) return NotFound();
             return Ok(product);
         }
 
         [HttpGet("{barcode:long}")]
         public async Task<IActionResult> GetProduct(long barcode)
         {
-            var openFoodFactProduct = await foodFactsClient.GetProductByBarcodeAsync(barcode);
-            if (openFoodFactProduct is null)
-            {
-                return NotFound();
-            }
-
-            var dbProduct = await context.Products.FirstOrDefaultAsync(p => p.Barcode == barcode.ToString());
-            if (dbProduct is null)
-            {
-                dbProduct = new Product
-                {
-                    Barcode = barcode.ToString(),
-                    ProductName = openFoodFactProduct.Name,
-                    FrontImageUrl = openFoodFactProduct.ImageUrl,
-                    Nutrients = new Nutrients
-                    {
-                        Carbohydrates = openFoodFactProduct.Nutrients.Carbohydrates,
-                        EnergyKcal = openFoodFactProduct.Nutrients.Calories,
-                        Fat = openFoodFactProduct.Nutrients.Fat,
-                        Proteins = openFoodFactProduct.Nutrients.Proteins,
-                        Salt = openFoodFactProduct.Nutrients.Salt,
-                        SaturatedFat = openFoodFactProduct.Nutrients.SaturatedFat,
-                        Sugars = openFoodFactProduct.Nutrients.Sugars
-                    }
-                };
-
-                await context.Products.AddAsync(dbProduct);
-                await context.SaveChangesAsync();
-            }
-
-            return Ok(dbProduct);
+            var product = await productService.GetProductByBarcodeOrFetchAsync(barcode);
+            if (product is null) return NotFound();
+            return Ok(product);
         }
 
         [HttpPost]
@@ -89,15 +53,13 @@ namespace FoodSense.API.Controllers
                 return BadRequest("Barcode is required.");
             }
 
-            var barcodeExists = await context.Products.AnyAsync(p => p.Barcode == product.Barcode);
-            if (barcodeExists)
+            var existing = await productService.GetProductByBarcodeOrFetchAsync(product.Barcode);
+            if (existing != null)
             {
                 return Conflict("A product with this barcode already exists.");
             }
 
-            await context.Products.AddAsync(product);
-            await context.SaveChangesAsync();
-
+            await productService.CreateProductAsync(product);
             return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
         }
 
@@ -109,39 +71,17 @@ namespace FoodSense.API.Controllers
                 return BadRequest("Barcode is required.");
             }
 
-            var barcodeExists = await context.Products.AnyAsync(p => p.Id != id && p.Barcode == product.Barcode);
-            if (barcodeExists)
-            {
-                return Conflict("A product with this barcode already exists.");
-            }
+            var updatedProduct = await productService.UpdateProductAsync(id, product);
+            if (updatedProduct == null) return NotFound();
 
-            var dbProduct = await context.Products.FindAsync(id);
-            if (dbProduct is null)
-            {
-                return NotFound();
-            }
-
-            product.Id = id;
-            context.Entry(dbProduct).CurrentValues.SetValues(product);
-            dbProduct.Nutrients = product.Nutrients ?? new Nutrients();
-
-            await context.SaveChangesAsync();
-
-            return Ok(dbProduct);
+            return Ok(updatedProduct);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var dbProduct = await context.Products.FindAsync(id);
-            if (dbProduct is null)
-            {
-                return NotFound();
-            }
-
-            context.Products.Remove(dbProduct);
-            await context.SaveChangesAsync();
-
+            var deleted = await productService.DeleteProductAsync(id);
+            if (!deleted) return NotFound();
             return NoContent();
         }
     }

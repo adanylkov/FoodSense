@@ -2,8 +2,12 @@ using FluentAssertions;
 using FoodSense.API.Controllers;
 using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
+using FoodSense.API.Repositories;
+using FoodSense.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace FoodSense.API.Tests;
 
@@ -19,11 +23,15 @@ public class FoodControllerTests
         }
         await context.SaveChangesAsync();
 
-        var controller = new FoodController(context, null!);
+
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
 
         var result = await controller.GetProducts(page: 2, pageSize: 25);
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
-        var products = okResult.Value.Should().BeAssignableTo<IEnumerable<Product>>().Subject.ToList();
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<Product>>>().Subject;
+        var products = response.Data;
 
         products.Should().HaveCount(25);
         products.First().Barcode.Should().Be("26");
@@ -37,7 +45,9 @@ public class FoodControllerTests
     public async Task GetProducts_ShouldRejectInvalidPagination(int page, int pageSize)
     {
         await using var context = CreateContext();
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
 
         var result = await controller.GetProducts(page, pageSize);
 
@@ -48,7 +58,14 @@ public class FoodControllerTests
     public async Task CreateProduct_ShouldPersistAndReturnCreated()
     {
         await using var context = CreateContext();
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var opfClientMock = new Mock<IOpenFoodFactsClient>();
+        opfClientMock.Setup(client => client.GetProductByBarcodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OpenFoodFactProduct?)null);
+
+
+        var productService = new ProductService(productRepository, opfClientMock.Object);
+        var controller = new FoodController(productService);
 
         var createdProduct = new Product { Barcode = "5901234567890" };
         var result = await controller.CreateProduct(createdProduct);
@@ -65,7 +82,9 @@ public class FoodControllerTests
         context.Products.Add(new Product { Barcode = "111" });
         await context.SaveChangesAsync();
 
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
         var result = await controller.CreateProduct(new Product { Barcode = "111" });
 
         result.Result.Should().BeOfType<ConflictObjectResult>();
@@ -79,7 +98,9 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
         var updated = new Product { Barcode = "222" };
 
         var result = await controller.UpdateProduct(existing.Id, updated);
@@ -102,7 +123,9 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
         var updated = new Product
         {
             Barcode = "222",
@@ -128,7 +151,9 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var controller = new FoodController(context, null!);
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!);
+        var controller = new FoodController(productService);
         var result = await controller.DeleteProduct(existing.Id);
 
         result.Should().BeOfType<NoContentResult>();

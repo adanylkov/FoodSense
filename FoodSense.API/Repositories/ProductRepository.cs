@@ -1,0 +1,72 @@
+using FoodSense.API.Data;
+using FoodSense.API.Data.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace FoodSense.API.Repositories;
+
+public interface IProductRepository
+{
+    Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize);
+    Task<int> GetTotalCountAsync();
+    Task<Product?> GetByIdAsync(int id);
+    Task<Product?> GetByBarcodeAsync(string barcode);
+    Task AddAsync(Product product);
+    Task UpdateAsync(Product product);
+    Task DeleteAsync(int id);
+}
+
+public class ProductRepository(FoodSenseDbContext context) : IProductRepository
+{
+    public async Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize)
+    {
+        return await context.Products
+            .AsNoTracking()
+            .OrderBy(p => p.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetTotalCountAsync()
+    {
+        return await context.Products.CountAsync();
+    }
+
+    public async Task<Product?> GetByIdAsync(int id)
+    {
+        return await context.Products.FindAsync(id);
+    }
+
+    public async Task<Product?> GetByBarcodeAsync(string barcode)
+    {
+        return await context.Products.FirstOrDefaultAsync(p => p.Barcode == barcode);
+    }
+
+    public async Task AddAsync(Product product)
+    {
+        await context.Products.AddAsync(product);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(Product product)
+    {
+        var existing = await context.Products.FindAsync(product.Id);
+        if (existing != null)
+        {
+            context.Entry(existing).CurrentValues.SetValues(product);
+            existing.Nutrients = product.Nutrients;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var product = await context.Products.FindAsync(id);
+        if (product != null)
+        {
+            context.Products.Remove(product);
+            await context.SaveChangesAsync();
+        }
+    }
+}
+

@@ -1,6 +1,7 @@
 using FoodSense.API.Data;
+using FoodSense.API.Repositories;
+using FoodSense.API.Services;
 using FoodSense.Extensions;
-using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,8 @@ builder.Services.AddSwaggerGen();
 
 builder.AddSqlServerDbContext<FoodSenseDbContext>("foodsense");
 builder.Services.AddOpenFoodFactsClient();
+builder.Services.AddScoped<IProductRepository, ProductRepository>(); 
+builder.Services.AddScoped<IProductService, ProductService>(); 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorFrontend", policy =>
