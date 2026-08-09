@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿namespace FoodSense.API.Data.Models;
+
+
+using System.Text.Json.Serialization;
 
 public class OpenFoodFactsResponse
 {
@@ -9,10 +12,10 @@ public class OpenFoodFactsResponse
     public int Status { get; set; }
 
     [JsonPropertyName("product")]
-    public ProductDto? Product { get; set; }
+    public OpenFoodFactProduct? Product { get; set; }
 }
 
-public class ProductDto
+public class OpenFoodFactProduct
 {
     [JsonPropertyName("product_name")]
     public string Name { get; set; } = string.Empty;
@@ -27,10 +30,10 @@ public class ProductDto
     public string Quantity { get; set; } = string.Empty;
 
     [JsonPropertyName("nutriments")]
-    public NutritionDto Nutrients { get; set; } = new();
+    public OpenFoodFactNutrition Nutrients { get; set; } = new();
 }
 
-public class NutritionDto
+public class OpenFoodFactNutrition
 {
     [JsonPropertyName("energy-kcal_100g")]
     public double Calories { get; set; }

@@ -48,8 +48,8 @@ namespace FoodSense.API.Controllers
         [HttpGet("{barcode:long}")]
         public async Task<IActionResult> GetProduct(long barcode)
         {
-            var productResponse = await foodFactsClient.GetProductByBarcodeAsync(barcode);
-            if (productResponse is null)
+            var openFoodFactProduct = await foodFactsClient.GetProductByBarcodeAsync(barcode);
+            if (openFoodFactProduct is null)
             {
                 return NotFound();
             }
@@ -60,17 +60,17 @@ namespace FoodSense.API.Controllers
                 dbProduct = new Product
                 {
                     Barcode = barcode.ToString(),
-                    ProductName = productResponse.Name,
-                    FrontImageUrl = productResponse.ImageUrl,
+                    ProductName = openFoodFactProduct.Name,
+                    FrontImageUrl = openFoodFactProduct.ImageUrl,
                     Nutrients = new Nutrients
                     {
-                        Carbohydrates = productResponse.Nutrients.Carbohydrates,
-                        EnergyKcal = productResponse.Nutrients.Calories,
-                        Fat = productResponse.Nutrients.Fat,
-                        Proteins = productResponse.Nutrients.Proteins,
-                        Salt = productResponse.Nutrients.Salt,
-                        SaturatedFat = productResponse.Nutrients.SaturatedFat,
-                        Sugars = productResponse.Nutrients.Sugars
+                        Carbohydrates = openFoodFactProduct.Nutrients.Carbohydrates,
+                        EnergyKcal = openFoodFactProduct.Nutrients.Calories,
+                        Fat = openFoodFactProduct.Nutrients.Fat,
+                        Proteins = openFoodFactProduct.Nutrients.Proteins,
+                        Salt = openFoodFactProduct.Nutrients.Salt,
+                        SaturatedFat = openFoodFactProduct.Nutrients.SaturatedFat,
+                        Sugars = openFoodFactProduct.Nutrients.Sugars
                     }
                 };
 

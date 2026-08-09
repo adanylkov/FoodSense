@@ -7,6 +7,7 @@ namespace FoodSense.API.Data.Models
         public string ProductName { get; set; } = string.Empty;
         public string FrontImageUrl { get; set; } = string.Empty;
         public Nutrients Nutrients { get; set; } = new();
+        public ICollection<PantryItem> PantryItems { get; set; } = new List<PantryItem>();
     }
 
     public class Nutrients

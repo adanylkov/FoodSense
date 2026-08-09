@@ -1,9 +1,10 @@
 using System.Net.Http.Json;
+using FoodSense.API.Data.Models;
 
 public interface IOpenFoodFactsClient
 {
-    Task<ProductDto?> GetProductByBarcodeAsync(string barcode, CancellationToken cancellationToken = default);
-    Task<ProductDto?> GetProductByBarcodeAsync(long barcode, CancellationToken cancellationToken = default)
+    Task<OpenFoodFactProduct?> GetProductByBarcodeAsync(string barcode, CancellationToken cancellationToken = default);
+    Task<OpenFoodFactProduct?> GetProductByBarcodeAsync(long barcode, CancellationToken cancellationToken = default)
     {
         return GetProductByBarcodeAsync(barcode.ToString(), cancellationToken);
     }
@@ -18,7 +19,7 @@ public class OpenFoodFactsClient : IOpenFoodFactsClient
         _httpClient = httpClient;
     }
 
-    public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode, CancellationToken cancellationToken = default)
+    public async Task<OpenFoodFactProduct?> GetProductByBarcodeAsync(string barcode, CancellationToken cancellationToken = default)
     {
         // OpenFoodFacts v2 JSON endpoint
         var response = await _httpClient.GetAsync($"api/v2/product/{barcode}.json", cancellationToken);
