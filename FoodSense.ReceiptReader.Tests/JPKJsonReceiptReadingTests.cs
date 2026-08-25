@@ -110,7 +110,7 @@ public class JPKJsonReceiptReaderTest
 
       products.Should().NotBeNull();
       products.Should().HaveCount(3);
-      products[0].Name.Should().Contain("NektarBanRiviva1l");
+      products[0].ProductName.Should().Contain("NektarBanRiviva1l");
     }
 
 }

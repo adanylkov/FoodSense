@@ -2,23 +2,37 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FoodSense.ReceiptReader.Core;
+using FoodSense.API.Data.Models;
 
 namespace FoodSense.ReceiptReader;
 
 public class JPKJsonReceiptReader
 {
   private static readonly CultureInfo PolishCulture = new("pl-PL");
-  private readonly IList<Product> _products = [];
-  public IReadOnlyList<Product> Products => (IReadOnlyList<Product>)_products;
+  private readonly List<Product> _products = [];
+  private readonly List<PantryItem> _pantryItems = [];
+
+  public IReadOnlyList<Product> Products => _products;
+  public IReadOnlyList<PantryItem> PantryItems => _pantryItems;
 
   public JPKJsonReceiptReader(string json)
   {
-    _products = ReadProducts(json).ToList();
+    var pantryItems = ReadPantryItems(json).ToList();
+    _pantryItems = pantryItems;
+    _products = pantryItems.Select(item => item.Product).ToList();
   }
 
-
   public static IEnumerable<BodyItem> Read(string json)
+  {
+    return ReadBodyItems(json);
+  }
+
+  private IEnumerable<Product> ReadProducts(string json)
+  {
+    return ReadPantryItems(json).Select(item => item.Product);
+  }
+
+  private static IEnumerable<BodyItem> ReadBodyItems(string json)
   {
     if (string.IsNullOrWhiteSpace(json))
       return Enumerable.Empty<BodyItem>();
@@ -27,33 +41,42 @@ public class JPKJsonReceiptReader
     return receiptRoot?.Body ?? Enumerable.Empty<BodyItem>();
   }
 
-  private IEnumerable<Product> ReadProducts(string json)
+  private static IEnumerable<PantryItem> ReadPantryItems(string json)
   {
-    if (string.IsNullOrWhiteSpace(json))
-      return Enumerable.Empty<Product>();
-
-    var receiptRoot = JsonSerializer.Deserialize<ReceiptRoot>(json);
-
-    return receiptRoot?.Body?
+    return ReadBodyItems(json)
       .Where(b => b.SellLine != null)
-      .Select(MapSellLineToProduct)
-      ?? Enumerable.Empty<Product>();
+      .Select(MapSellLineToPantryItem);
   }
 
-  private static Product MapSellLineToProduct(BodyItem bodyItem)
+  private static PantryItem MapSellLineToPantryItem(BodyItem bodyItem)
   {
     var sell = bodyItem.SellLine!;
-
-    var name = ExtractName(sell.Name);
-    var quantity = ParseQuantity(sell.Quantity);
-    var price = sell.Price; // keep as-is (int) — model may expect price in cents
-
-    return new Product
+    var productName = ExtractName(sell.Name);
+    var product = new Product
     {
-      Name = name,
-      Price = price,
-      Quantity = quantity,
+      Barcode = ExtractBarcode(bodyItem),
+      ProductName = productName,
+      FrontImageUrl = string.Empty,
+      Nutrients = new Nutrients(),
+      PantryItems = []
     };
+
+    var pantryItem = new PantryItem
+    {
+      Product = product,
+      ProductId = product.Id,
+      Quantity = ParseQuantityDecimal(sell.Quantity),
+      AddedAt = DateTime.UtcNow,
+      UpdatedAt = DateTime.UtcNow
+    };
+
+    product.PantryItems = [pantryItem];
+    return pantryItem;
+  }
+
+  private static string ExtractBarcode(BodyItem bodyItem)
+  {
+    return bodyItem.Barcode?.Data ?? string.Empty;
   }
 
   private static string ExtractName(string? rawName)
@@ -61,26 +84,23 @@ public class JPKJsonReceiptReader
     if (string.IsNullOrWhiteSpace(rawName))
       return string.Empty;
 
-    // Original code removed the last character - preserve intention safely.
     var trimmed = rawName.Trim();
     return trimmed.Length > 0 ? trimmed.Substring(0, Math.Max(0, trimmed.Length - 1)).Trim() : string.Empty;
   }
 
-  private static float ParseQuantity(string? quantityStr)
+  private static decimal ParseQuantityDecimal(string? quantityStr)
   {
     if (string.IsNullOrWhiteSpace(quantityStr))
-      return 0f;
+      return 0m;
 
-    if (float.TryParse(quantityStr, NumberStyles.Float, PolishCulture, out var value))
+    if (decimal.TryParse(quantityStr, NumberStyles.Float, PolishCulture, out var value))
       return value;
 
-    // Fallback: try invariant culture
-    if (float.TryParse(quantityStr, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+    if (decimal.TryParse(quantityStr, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
       return value;
 
-    return 0f;
+    return 0m;
   }
-
 }
 
 public class ReceiptRoot

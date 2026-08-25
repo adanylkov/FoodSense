@@ -10,4 +10,8 @@
     <PackageReference Include="PDFsharp" Version="6.2.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FoodSense.API\FoodSense.API.csproj" />
+  </ItemGroup>
+
 </Project>
