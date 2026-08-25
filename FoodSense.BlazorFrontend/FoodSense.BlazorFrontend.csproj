@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FoodSense.Common\FoodSense.Common.csproj" />
+    <ProjectReference Include="..\FoodSense.ReceiptReader\FoodSense.ReceiptReader.csproj" />
   </ItemGroup>
 
 </Project>
