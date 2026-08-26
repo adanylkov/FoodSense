@@ -1,0 +1,86 @@
+@using FoodSense.Common.Models
+
+<section class="col-lg-8" aria-labelledby="catalog-heading">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 id="catalog-heading" class="h5 fw-bold mb-0">Existing Catalog</h2>
+        <span class="badge bg-body-tertiary text-secondary border px-3 py-2 rounded-pill fw-normal">
+            Page @CurrentPage of @(TotalPages == 0 ? 1 : TotalPages)
+        </span>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="text-center py-5 my-5">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading products...</span>
+            </div>
+            <p class="text-secondary">Fetching product database...</p>
+        </div>
+    }
+    else if (Products == null || !Products.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+            <div class="card-body">
+                <h3 class="h5 fw-bold mb-2">No Products Found</h3>
+                <p class="text-secondary mb-0">Use the form on the left to add your first food item.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            @foreach (var product in Products)
+            {
+                <ProductCard Product="product" 
+                             OnQuickAddPantryItem="OnQuickAddPantryItem" 
+                             OnOpenPantryModal="OnOpenPantryModal" 
+                             OnStartEditing="OnStartEditing" 
+                             OnPromptDelete="OnPromptDelete" />
+            }
+        </div>
+
+        <!-- Pagination Navigation -->
+        <nav aria-label="Product pagination" class="mt-4">
+            <ul class="pagination justify-content-center gap-1">
+                <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
+                    <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                            @onclick="(() => OnPageChanged.InvokeAsync(CurrentPage - 1))"
+                            disabled="@(CurrentPage <= 1)">
+                        Previous
+                    </button>
+                </li>
+
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    int pageNumber = i;
+                    <li class="page-item @(i == CurrentPage ? "active" : "")">
+                        <button class="page-link rounded-3 border-0 shadow-sm px-3" @onclick="(() => OnPageChanged.InvokeAsync(pageNumber))">
+                            @i
+                        </button>
+                    </li>
+                }
+
+                <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
+                    <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                            @onclick="(() => OnPageChanged.InvokeAsync(CurrentPage + 1))"
+                            disabled="@(CurrentPage >= TotalPages)">
+                        Next
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    }
+</section>
+
+@code {
+    [Parameter] public IEnumerable<ProductDto>? Products { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public int CurrentPage { get; set; }
+    [Parameter] public int TotalPages { get; set; }
+
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+    [Parameter] public EventCallback<int> OnQuickAddPantryItem { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnStartEditing { get; set; }
+    [Parameter] public EventCallback<int> OnPromptDelete { get; set; }
+}

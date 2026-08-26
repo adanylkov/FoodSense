@@ -1,0 +1,78 @@
+@using FoodSense.Common.Models
+@using System.Text.Json
+@inject IJSRuntime JS
+
+<div class="col">
+    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
+        <div class="position-absolute top-0 end-0 p-3 d-flex gap-1" style="z-index: 2;">
+            <!-- Debug Button -->
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Copy JSON Debug Info" @onclick="CopyJsonToClipboard">
+                🐞
+            </button>
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Edit" @onclick="() => OnStartEditing.InvokeAsync(Product)">
+                ✏️
+            </button>
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm text-danger" title="Delete" @onclick="() => OnPromptDelete.InvokeAsync(Product.Id)">
+                🗑️
+            </button>
+        </div>
+
+        <div class="bg-body-tertiary p-4 text-center border-bottom">
+            <img src="@GetImageSource(Product.FrontImageUrl)" 
+                 alt="@Product.ProductName" 
+                 class="img-fluid object-fit-contain" 
+                 style="height: 140px;" />
+        </div>
+
+        <div class="card-body p-4 d-flex flex-column">
+            <div class="mb-2">
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill extra-small">
+                    @(string.IsNullOrWhiteSpace(Product.Brands) ? "Unbranded" : Product.Brands)
+                </span>
+            </div>
+            
+            <h3 class="h6 fw-bold text-dark mb-1">@Product.ProductName</h3>
+            <p class="text-secondary extra-small mb-3">Barcode: @(string.IsNullOrWhiteSpace(Product.Barcode) ? "-" : Product.Barcode)</p>
+
+            @if (Product.Nutrients != null)
+            {
+                <div class="row g-2 extra-small text-secondary bg-body-tertiary rounded-3 p-2 mb-3 mt-auto">
+                    <div class="col-6">🔥 @Product.Nutrients.EnergyKcal kcal</div>
+                    <div class="col-6">🥩 @Product.Nutrients.Proteins g Pro</div>
+                    <div class="col-6">🍞 @Product.Nutrients.Carbohydrates g Carb</div>
+                    <div class="col-6">🥑 @Product.Nutrients.Fat g Fat</div>
+                </div>
+            }
+
+            <div class="d-flex gap-2 mt-auto">
+                <button class="btn btn-outline-primary btn-sm rounded-3 w-100 fw-semibold extra-small" 
+                        @onclick="() => OnQuickAddPantryItem.InvokeAsync(Product.Id)">
+                    + Quick Add
+                </button>
+                <button class="btn btn-primary btn-sm rounded-3 w-100 fw-semibold extra-small" 
+                        @onclick="() => OnOpenPantryModal.InvokeAsync(Product)">
+                    Manage Stock
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private const string PlaceholderImagePath = "/images/product-placeholder.svg";
+
+    [Parameter, EditorRequired] public required ProductDto Product { get; set; }
+    [Parameter] public EventCallback<int> OnQuickAddPantryItem { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnStartEditing { get; set; }
+    [Parameter] public EventCallback<int> OnPromptDelete { get; set; }
+
+    private string GetImageSource(string? imageUrl)
+        => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
+
+    private async Task CopyJsonToClipboard()
+    {
+        var json = JsonSerializer.Serialize(Product, new JsonSerializerOptions { WriteIndented = true });
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+    }
+}

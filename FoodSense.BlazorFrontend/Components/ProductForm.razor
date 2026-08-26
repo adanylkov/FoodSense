@@ -1,0 +1,135 @@
+@using FoodSense.Common.Models
+
+<aside class="col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
+        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+            <h2 class="h5 fw-bold mb-0">
+                @((EditingProductId is null) ? "Create New Product" : "Edit Product")
+            </h2>
+            <p class="text-secondary small">Enter barcode to auto-populate details.</p>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="bg-body-tertiary rounded-3 p-3 text-center mb-3 border border-dashed">
+                <img src="@GetImageSource(FormModel.FrontImageUrl)" 
+                     alt="Product Preview"
+                     class="img-fluid rounded-3 object-fit-contain" 
+                     style="max-height: 160px;" />
+            </div>
+
+            <EditForm Model="FormModel" OnValidSubmit="OnSubmit">
+                <div class="mb-3">
+                    <label for="barcodeInput" class="form-label small fw-semibold">Barcode</label>
+                    <InputText id="barcodeInput" 
+                               class="form-control rounded-3" 
+                               placeholder="e.g. 5449000000996"
+                               @bind-Value="FormModel.Barcode"
+                               @onblur="() => OnBarcodeBlur.InvokeAsync(FormModel.Barcode)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="productNameInput" class="form-label small fw-semibold">Product Name</label>
+                    <InputText id="productNameInput" class="form-control rounded-3" placeholder="Item title" @bind-Value="FormModel.ProductName" />
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label for="brandsInput" class="form-label small fw-semibold">Brands</label>
+                        <InputText id="brandsInput" class="form-control rounded-3" placeholder="Brand name" @bind-Value="FormModel.Brands" />
+                    </div>
+                    <div class="col-6">
+                        <label for="quantityInput" class="form-label small fw-semibold">Quantity</label>
+                        <InputText id="quantityInput" class="form-control rounded-3" placeholder="e.g. 500g" @bind-Value="FormModel.ProductQuantity" />
+                    </div>
+                </div>
+
+                <div class="accordion mb-4" id="formNutrientAccordion">
+                    <div class="accordion-item border rounded-3 overflow-hidden">
+                        <h3 class="accordion-header" id="formNutrientHeader">
+                            <button class="accordion-button collapsed bg-body-tertiary shadow-none py-2 px-3 small fw-semibold text-dark" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#formNutrientCollapse" 
+                                    aria-expanded="false" 
+                                    aria-controls="formNutrientCollapse">
+                                Nutritional Information
+                            </button>
+                        </h3>
+                        <div id="formNutrientCollapse" class="accordion-collapse collapse" aria-labelledby="formNutrientHeader">
+                            <div class="accordion-body p-3 bg-white">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Energy (kcal)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.EnergyKcal" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Fat (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Fat" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Sat. Fat (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.SaturatedFat" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Carbs (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Carbohydrates" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Sugars (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Sugars" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label extra-small text-secondary mb-1">Proteins (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Proteins" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label extra-small text-secondary mb-1">Salt (g)</label>
+                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Salt" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-100 rounded-3 py-2 fw-semibold" type="submit" disabled="@IsSaving">
+                        @if (IsSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>Save Product</span>
+                        }
+                    </button>
+
+                    @if (EditingProductId is not null)
+                    {
+                        <button class="btn btn-light border w-100 rounded-3 py-2 text-secondary fw-semibold" type="button" @onclick="OnCancel">
+                            Cancel
+                        </button>
+                    }
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</aside>
+
+@code {
+    private const string PlaceholderImagePath = "/images/product-placeholder.svg";
+
+    [Parameter, EditorRequired] public required ProductDto FormModel { get; set; }
+    [Parameter] public int? EditingProductId { get; set; }
+    [Parameter] public bool IsSaving { get; set; }
+
+    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<string?> OnBarcodeBlur { get; set; }
+
+    private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
+
+    private string GetImageSource(string? imageUrl)
+        => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
+}

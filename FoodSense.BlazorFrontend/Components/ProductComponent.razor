@@ -1,0 +1,123 @@
+@using System.Linq
+@using FoodSense.Common.Models
+@using Microsoft.AspNetCore.Components
+
+<div class="col">
+    <article class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column">
+        <div class="position-relative bg-body-tertiary text-center p-3">
+            <img src="@GetImageSource(Product.FrontImageUrl)" alt="@Product.ProductName"
+                 class="card-img-top object-fit-contain" style="height: 180px;" />
+            <span class="position-absolute top-0 end-0 m-3 badge bg-white text-dark border shadow-sm rounded-pill">
+                @Product.ProductQuantity
+            </span>
+        </div>
+
+        <div class="card-body p-4 d-flex flex-column">
+            <span class="text-secondary extra-small fw-semibold text-uppercase mb-1">@Product.Brands</span>
+            <h3 class="h6 card-title fw-bold text-dark mb-2 text-truncate">@Product.ProductName</h3>
+            <p class="card-text small text-secondary mb-3">
+                <strong>Barcode:</strong> <code>@Product.Barcode</code>
+            </p>
+
+            <!-- Unique Accordion Instance Per Product Nutrients -->
+            <div class="accordion mt-auto mb-3" id="@($"nutrientAccordion-{Product.Id}")">
+                <div class="accordion-item border-0 bg-body-tertiary rounded-3 overflow-hidden">
+                    <h4 class="accordion-header" id="@($"nutrientHeader-{Product.Id}")">
+                        <button
+                            class="accordion-button collapsed shadow-none bg-body-tertiary p-2 px-3 small fw-semibold text-secondary"
+                            type="button" data-bs-toggle="collapse" data-bs-target="@($"#nutrientBody-{Product.Id}")"
+                            aria-expanded="false" aria-controls="@($"nutrientBody-{Product.Id}")">
+                            Nutritional Value
+                        </button>
+                    </h4>
+                    <div id="@($"nutrientBody-{Product.Id}")" class="accordion-collapse collapse">
+                        <div class="accordion-body p-3 bg-white border-top extra-small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Energy:</span>
+                                <span class="fw-bold">@Product.Nutrients?.EnergyKcal kcal</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Fat:</span>
+                                <span class="fw-bold">@Product.Nutrients?.Fat g</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Saturated Fat:</span>
+                                <span class="fw-bold">@Product.Nutrients?.SaturatedFat g</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Carbohydrates:</span>
+                                <span class="fw-bold">@Product.Nutrients?.Carbohydrates g</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Sugars:</span>
+                                <span class="fw-bold">@Product.Nutrients?.Sugars g</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary">Proteins:</span>
+                                <span class="fw-bold">@Product.Nutrients?.Proteins g</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-secondary">Salt:</span>
+                                <span class="fw-bold">@Product.Nutrients?.Salt g</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Pantry Summary & Direct Action -->
+            <div class="bg-body-tertiary rounded-3 p-2 mb-3 d-flex align-items-center justify-content-between">
+                <div class="extra-small">
+                    <span class="text-secondary">In Pantry: </span>
+                    <span class="fw-bold text-dark">@(Product.PantryItems?.Count() ?? 0) item(s)</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-primary btn-sm extra-small py-1 px-2 rounded-2 fw-semibold"
+                            title="Quick add 1 item to pantry" @onclick="QuickAddPantryItemAsync">
+                        +1
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm extra-small py-1 px-2 rounded-2 fw-semibold"
+                            @onclick="OpenPantryModalAsync">
+                        Manage
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="d-flex gap-2 border-top pt-3">
+                <button class="btn btn-light-subtle border text-primary btn-sm w-100 rounded-3 fw-semibold"
+                        type="button" @onclick="StartEditingAsync">
+                    Edit
+                </button>
+                <button class="btn btn-outline-danger btn-sm w-100 rounded-3 fw-semibold" type="button"
+                        @onclick="PromptDeleteAsync">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </article>
+</div>
+
+@code {
+    [Parameter]
+    public ProductDto Product { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<int> OnQuickAddPantryItem { get; set; }
+
+    [Parameter]
+    public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
+
+    [Parameter]
+    public EventCallback<ProductDto> OnStartEditing { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPromptDelete { get; set; }
+
+    private string GetImageSource(string? url) => string.IsNullOrWhiteSpace(url) ? "images/placeholder.png" : url!;
+
+    private Task QuickAddPantryItemAsync() => OnQuickAddPantryItem.HasDelegate ? OnQuickAddPantryItem.InvokeAsync(Product.Id) : Task.CompletedTask;
+    private Task OpenPantryModalAsync() => OnOpenPantryModal.HasDelegate ? OnOpenPantryModal.InvokeAsync(Product) : Task.CompletedTask;
+    private Task StartEditingAsync() => OnStartEditing.HasDelegate ? OnStartEditing.InvokeAsync(Product) : Task.CompletedTask;
+    private Task PromptDeleteAsync() => OnPromptDelete.HasDelegate ? OnPromptDelete.InvokeAsync(Product.Id) : Task.CompletedTask;
+}

@@ -1,0 +1,166 @@
+@using FoodSense.Common.Models
+@using FoodSense.ReceiptReader
+@inject IReceiptReaderFactory ReceiptReaderFactory
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+            <div>
+                <h2 class="h5 fw-bold text-dark mb-1">Upload receipt JSON</h2>
+                <p class="text-secondary small mb-0">Parse a receipt and review items before adding them to your pantry.</p>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <InputFile OnChange="HandleReceiptFileSelected" accept=".json,application/json" class="form-control w-auto" />
+        </div>
+
+        @if (isLoadingReceipt)
+        {
+            <div class="d-flex align-items-center gap-2 mt-3 text-secondary">
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                <span>Parsing receipt...</span>
+            </div>
+        }
+
+        @if (receiptPreviewItems.Count > 0)
+        {
+            <div class="mt-4 border rounded-4 overflow-hidden">
+                <div class="d-flex justify-content-between align-items-center gap-3 px-3 py-2 bg-body-tertiary border-bottom">
+                    <div class="fw-semibold text-dark">Receipt preview</div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" checked="@AllReceiptItemsSelected" @onchange="ToggleSelectAllReceiptItems" />
+                        <label class="form-check-label small text-secondary">Select all</label>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 48px;"></th>
+                                <th>Name</th>
+                                <th>Barcode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in receiptPreviewItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" checked="@item.IsSelected" @onchange="(e => ToggleReceiptItemSelection(item, (bool?)e.Value ?? false))" />
+                                    </td>
+                                    <td>@item.Item.ProductName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.Item.Barcode) ? "-" : item.Item.Barcode)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-3 border-top bg-white">
+                    <button class="btn btn-primary rounded-3 fw-semibold" type="button" @onclick="ConfirmReceiptItemsAsync" disabled="@isAddingReceiptItems">
+                        @if (isAddingReceiptItems)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            <span>Adding...</span>
+                        }
+                        else
+                        {
+                            <span>Confirm &amp; Add to Pantry</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            <strong class="text-danger">Error:</strong> @error
+        </div>
+        <button type="button" class="btn-close" @onclick="() => error = null" aria-label="Close"></button>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnReceiptItemsAdded { get; set; }
+
+    private bool isLoadingReceipt;
+    private bool isAddingReceiptItems;
+    private string? error;
+    private List<ReceiptPreviewItem> receiptPreviewItems = [];
+
+    private sealed class ReceiptPreviewItem
+    {
+        public required ProductDto Item { get; init; }
+        public bool IsSelected { get; set; } = true;
+    }
+
+    private bool AllReceiptItemsSelected => receiptPreviewItems.Count > 0 && receiptPreviewItems.All(item => item.IsSelected);
+
+    private async Task HandleReceiptFileSelected(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null) return;
+
+        if (!file.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "Only .json receipt files are supported.";
+            receiptPreviewItems.Clear();
+            return;
+        }
+
+        isLoadingReceipt = true;
+        error = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            var reader = ReceiptReaderFactory.GetReader(Path.GetExtension(file.Name));
+            var items = await reader.ReadAsync(stream);
+            receiptPreviewItems = items
+                .Select(item => new ReceiptPreviewItem { Item = item, IsSelected = true })
+                .ToList();
+
+            if (receiptPreviewItems.Count == 0)
+            {
+                error = "No receipt items could be parsed from this file.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Unable to parse the receipt file: {ex.Message}";
+            receiptPreviewItems.Clear();
+        }
+        finally
+        {
+            isLoadingReceipt = false;
+        }
+    }
+
+    private void ToggleReceiptItemSelection(ReceiptPreviewItem item, bool isSelected)
+    {
+        item.IsSelected = isSelected;
+    }
+
+    private void ToggleSelectAllReceiptItems(ChangeEventArgs args)
+    {
+        var isChecked = args.Value as bool? ?? false;
+        foreach (var item in receiptPreviewItems)
+        {
+            item.IsSelected = isChecked;
+        }
+    }
+
+    private async Task ConfirmReceiptItemsAsync()
+    {
+        // Note: The original implementation of ConfirmReceiptItemsAsync was commented out 
+        // and relied on methods not present in the provided context (e.g., EnsureProductExistsAsync).
+        // For now, this component notifies the parent via EventCallback when confirmation is requested.
+        await OnReceiptItemsAdded.InvokeAsync();
+    }
+}
