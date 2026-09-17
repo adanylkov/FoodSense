@@ -1,6 +1,7 @@
 using FoodSense.BlazorFrontend.Components;
 using FoodSense.ReceiptReader;
 using FoodSense.Services;
+using FoodSense.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddHttpClient("FoodSenseApi", client =>
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("FoodSenseApi"));
 builder.Services.AddScoped<IReceiptReaderFactory, ReceiptReaderFactory>();
 builder.Services.AddScoped<IProductApiService, ProductApiService>();
+builder.Services.AddScoped<ProductsViewModel>();
 
 var app = builder.Build();
 

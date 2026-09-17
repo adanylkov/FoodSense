@@ -4,7 +4,7 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 id="catalog-heading" class="h5 fw-bold mb-0">Existing Catalog</h2>
         <span class="badge bg-body-tertiary text-secondary border px-3 py-2 rounded-pill fw-normal">
-            Page @CurrentPage of @(TotalPages == 0 ? 1 : TotalPages)
+            Page @Pagination.CurrentPage of @(Pagination.TotalPages == 0 ? 1 : Pagination.TotalPages)
         </span>
     </div>
 
@@ -39,44 +39,14 @@
             }
         </div>
 
-        <!-- Pagination Navigation -->
-        <nav aria-label="Product pagination" class="mt-4">
-            <ul class="pagination justify-content-center gap-1">
-                <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
-                    <button class="page-link rounded-3 border-0 shadow-sm px-3" 
-                            @onclick="(() => OnPageChanged.InvokeAsync(CurrentPage - 1))"
-                            disabled="@(CurrentPage <= 1)">
-                        Previous
-                    </button>
-                </li>
-
-                @for (int i = 1; i <= TotalPages; i++)
-                {
-                    int pageNumber = i;
-                    <li class="page-item @(i == CurrentPage ? "active" : "")">
-                        <button class="page-link rounded-3 border-0 shadow-sm px-3" @onclick="(() => OnPageChanged.InvokeAsync(pageNumber))">
-                            @i
-                        </button>
-                    </li>
-                }
-
-                <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
-                    <button class="page-link rounded-3 border-0 shadow-sm px-3" 
-                            @onclick="(() => OnPageChanged.InvokeAsync(CurrentPage + 1))"
-                            disabled="@(CurrentPage >= TotalPages)">
-                        Next
-                    </button>
-                </li>
-            </ul>
-        </nav>
+        <PaginationControls Pagination="Pagination" OnPageChanged="OnPageChanged" />
     }
 </section>
 
 @code {
     [Parameter] public IEnumerable<ProductDto>? Products { get; set; }
     [Parameter] public bool IsLoading { get; set; }
-    [Parameter] public int CurrentPage { get; set; }
-    [Parameter] public int TotalPages { get; set; }
+    [Parameter, EditorRequired] public PaginationModel Pagination { get; set; } = new();
 
     [Parameter] public EventCallback<int> OnPageChanged { get; set; }
     [Parameter] public EventCallback<int> OnQuickAddPantryItem { get; set; }

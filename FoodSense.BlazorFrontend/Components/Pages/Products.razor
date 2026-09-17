@@ -1,12 +1,11 @@
 @page "/products"
 @rendermode InteractiveServer
 @using FoodSense.Common.Models
-@using FoodSense.Services
-@inject IProductApiService productApi
+@using FoodSense.ViewModels
+@inject ProductsViewModel VM
 
 <PageTitle>FoodSense - Product Catalog</PageTitle>
 
-<!-- Page Header / Banner -->
 <div class="bg-body-tertiary border mb-4 rounded-4 p-4">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
@@ -19,84 +18,81 @@
     </div>
 </div>
 
-<ReceiptUploader OnReceiptItemsAdded="HandleReceiptItemsAdded" />
+<ReceiptUploader OnReceiptItemsAdded="() => VM.LoadProductsAsync(VM.Pagination.CurrentPage)" />
 
 <div>
     <!-- Status Alerts -->
-    @if (!string.IsNullOrWhiteSpace(message))
+    @if (!string.IsNullOrWhiteSpace(VM.SuccessMessage))
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
             <div class="d-flex align-items-center gap-2">
-                <strong>Success!</strong> @message
+                <strong>Success!</strong> @VM.SuccessMessage
             </div>
-            <button type="button" class="btn-close" @onclick="() => message = null" aria-label="Close"></button>
+            <button type="button" class="btn-close" @onclick="VM.ClearAlerts" aria-label="Close"></button>
         </div>
     }
 
-    @if (!string.IsNullOrWhiteSpace(error))
+    @if (!string.IsNullOrWhiteSpace(VM.ErrorMessage))
     {
         <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
             <div class="d-flex align-items-center gap-2">
-                <strong>Error:</strong> @error
+                <strong>Error:</strong> @VM.ErrorMessage
             </div>
-            <button type="button" class="btn-close" @onclick="() => error = null" aria-label="Close"></button>
+            <button type="button" class="btn-close" @onclick="VM.ClearAlerts" aria-label="Close"></button>
         </div>
     }
 
     <div class="row g-4">
-        <!-- Extracted Form Component -->
-        <ProductForm FormModel="formModel"
-                     EditingProductId="editingProductId"
-                     IsSaving="isSaving"
-                     OnSubmit="HandleSubmit"
-                     OnCancel="ResetForm"
-                     OnBarcodeBlur="HandleBarcodeInput" />
+        <ProductForm FormModel="VM.FormModel"
+                     EditingProductId="VM.EditingProductId"
+                     IsSaving="VM.IsSaving"
+                     OnSubmit="VM.SaveProductAsync"
+                     OnCancel="VM.ResetForm"
+                     OnBarcodeBlur="VM.HandleBarcodeInputAsync" />
 
-        <!-- Extracted List Component -->
-        <ProductList Products="products" 
-                     IsLoading="isLoading" 
-                     CurrentPage="currentPage" 
-                     TotalPages="totalPages" 
-                     OnPageChanged="LoadProductsAsync" 
-                     OnQuickAddPantryItem="QuickAddPantryItem" 
-                     OnOpenPantryModal="OpenPantryModal" 
-                     OnStartEditing="StartEditing" 
-                     OnPromptDelete="PromptDelete" />
+        <ProductList Products="VM.Products" 
+                     IsLoading="VM.IsLoading" 
+                     Pagination="VM.Pagination" 
+                     OnPageChanged="VM.LoadProductsAsync" 
+                     OnQuickAddPantryItem="VM.QuickAddPantryItemAsync" 
+                     OnOpenPantryModal="VM.OpenPantryModal" 
+                     OnStartEditing="VM.StartEditing" 
+                     OnPromptDelete="VM.PromptDelete" />
     </div>
 </div>
 
-<!-- Extracted Pantry Modal Component -->
-@if (activePantryProduct is not null)
+<!-- Pantry Modal -->
+@if (VM.ActivePantryProduct is not null)
 {
-    <PantryModal Product="activePantryProduct"
-                 EditingPantryItemId="editingPantryItemId"
-                 Quantity="pantryFormQuantity"
-                 IsSaving="isSavingPantry"
-                 OnQuantityChanged="(e) => decimal.TryParse(e.Value?.ToString(), out pantryFormQuantity)"
-                 OnSave="SavePantryItemAsync"
-                 OnClose="ClosePantryModal"
-                 OnResetForm="ResetPantryForm"
-                 OnStartEditingItem="StartEditingPantryItem"
-                 OnDeleteItem="DeletePantryItemAsync" />
+    <PantryModal Product="VM.ActivePantryProduct"
+                 EditingPantryItemId="VM.EditingPantryItemId"
+                 Quantity="VM.PantryFormQuantity"
+                 IsSaving="VM.IsSavingPantry"
+                 OnQuantityChanged="(e) => Task.FromResult(decimal.TryParse(e.Value?.ToString(), out var q) ? VM.PantryFormQuantity = q : 1)"
+                 OnSave="VM.SavePantryItemAsync"
+                 OnClose="VM.ClosePantryModal"
+                 OnResetForm="VM.ResetPantryForm"
+                 OnStartEditingItem="VM.StartEditingPantryItem"
+                 OnDeleteItem="VM.DeletePantryItemAsync" />
 }
 
-<!-- Delete Product Confirmation Modal -->
-@if (productToDeleteId.HasValue)
+<!-- Delete Confirmation Modal -->
+@if (VM.ProductToDeleteId.HasValue)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow rounded-4 p-2">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title fw-bold text-danger">Confirm Deletion</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDelete" aria-label="Close"></button>
+                    <button type="button" class="btn-close" @onclick="VM.CancelDelete" aria-label="Close"></button>
                 </div>
                 <div class="modal-body py-3">
                     <p class="text-secondary mb-0">Are you sure you want to delete this product? This operation cannot be reversed.</p>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" @onclick="CancelDelete">Cancel</button>
-                    <button type="button" class="btn btn-danger rounded-3 px-4 fw-semibold" @onclick="ExecuteDelete">
-                        @if (isSaving)
+                    <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" @onclick="VM.CancelDelete">Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-3 px-4 fw-semibold" @onclick="VM.ExecuteDeleteAsync">
+                        @if (VM.IsSaving)
                         {
                             <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
                             <span>Deleting...</span>
@@ -112,304 +108,9 @@
     </div>
 }
 
-<style>
-    .extra-small { font-size: 0.75rem; }
-    .border-dashed { border-style: dashed !important; }
-    .last-child-border-0:last-child { border-bottom: none !important; }
-</style>
-
 @code {
-    private readonly List<ProductDto> products = [];
-    private readonly ProductDto formModel = new();
-    private int? editingProductId;
-    private int? productToDeleteId;
-    private bool isLoading;
-    private bool isSaving;
-    private string? message;
-    private string? error;
-
-    private int currentPage = 1;
-    private int pageSize = 12;
-    private int totalPages;
-
-    private ProductDto? activePantryProduct;
-    private int? editingPantryItemId;
-    private decimal pantryFormQuantity = 1;
-    private bool isSavingPantry;
-
     protected override async Task OnInitializedAsync()
     {
-        await LoadProductsAsync(currentPage);
-    }
-
-    private async Task HandleReceiptItemsAdded()
-    {
-        await LoadProductsAsync(currentPage);
-    }
-
-    private async Task LoadProductsAsync(int page)
-    {
-        isLoading = true;
-        message = null;
-        error = null;
-        currentPage = page;
-
-        try
-        {
-            var response = await productApi.GetProductsAsync(currentPage, pageSize);
-            if (response != null)
-            {
-                products.Clear();
-                products.AddRange(response.Data ?? Enumerable.Empty<ProductDto>());
-                totalPages = (int)Math.Ceiling((double)response.TotalCount / pageSize);
-
-                if (activePantryProduct != null)
-                {
-                    activePantryProduct = products.FirstOrDefault(p => p.Id == activePantryProduct.Id);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private async Task QuickAddPantryItem(int productId)
-    {
-        try
-        {
-            var response = await productApi.QuickAddPantryItemAsync(productId);
-            if (response.IsSuccessStatusCode)
-            {
-                message = "Pantry item added.";
-                await LoadProductsAsync(currentPage);
-            }
-            else
-            {
-                error = "Failed to add item to pantry.";
-            }
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-    }
-
-    private async Task SavePantryItemAsync()
-    {
-        if (activePantryProduct == null || pantryFormQuantity <= 0) return;
-
-        isSavingPantry = true;
-        error = null;
-
-        try
-        {
-            var pantryPayload = new PantryItemDto
-            {
-                Id = editingPantryItemId ?? 0,
-                Quantity = pantryFormQuantity,
-                AddedAt = DateTime.UtcNow
-            };
-
-            HttpResponseMessage response = editingPantryItemId.HasValue
-                ? await productApi.UpdatePantryItemAsync(editingPantryItemId.Value, pantryPayload)
-                : await productApi.CreatePantryItemAsync(activePantryProduct.Id, pantryPayload);
-
-            if (response.IsSuccessStatusCode)
-            {
-                ResetPantryForm();
-                await LoadProductsAsync(currentPage);
-            }
-            else
-            {
-                error = "Failed to save pantry item.";
-            }
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-        finally
-        {
-            isSavingPantry = false;
-        }
-    }
-
-    private async Task DeletePantryItemAsync(int pantryItemId)
-    {
-        try
-        {
-            var response = await productApi.DeletePantryItemAsync(pantryItemId);
-            if (response.IsSuccessStatusCode)
-            {
-                await LoadProductsAsync(currentPage);
-            }
-            else
-            {
-                error = "Failed to delete pantry item.";
-            }
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-    }
-
-    private void OpenPantryModal(ProductDto product)
-    {
-        activePantryProduct = product;
-        ResetPantryForm();
-    }
-
-    private void ClosePantryModal()
-    {
-        activePantryProduct = null;
-        ResetPantryForm();
-    }
-
-    private void StartEditingPantryItem(PantryItemDto item)
-    {
-        editingPantryItemId = item.Id;
-        pantryFormQuantity = item.Quantity;
-    }
-
-    private void ResetPantryForm()
-    {
-        editingPantryItemId = null;
-        pantryFormQuantity = 1;
-    }
-
-    private async Task HandleSubmit()
-    {
-        isSaving = true;
-        message = null;
-        error = null;
-
-        try
-        {
-            var payload = new ProductDto
-            {
-                Id = editingProductId ?? 0,
-                Barcode = formModel.Barcode,
-                ProductName = formModel.ProductName,
-                Brands = formModel.Brands,
-                ProductQuantity = formModel.ProductQuantity,
-                FrontImageUrl = formModel.FrontImageUrl,
-                Nutrients = formModel.Nutrients
-            };
-
-            if (editingProductId is null)
-            {
-                var response = await productApi.CreateProductAsync(payload);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorMsg = await response.Content.ReadAsStringAsync();
-                    message = $"Failed to create product: {errorMsg}";
-                }
-                else
-                {
-                    message = "Product created successfully.";
-                }
-            }
-            else
-            {
-                await productApi.UpdateProductAsync(editingProductId.Value, payload);
-                message = "Product updated successfully.";
-            }
-
-            ResetForm();
-            await LoadProductsAsync(currentPage);
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-        finally
-        {
-            isSaving = false;
-        }
-    }
-
-    private async Task HandleBarcodeInput(string? barcode)
-    {
-        if (!string.IsNullOrWhiteSpace(barcode))
-        {
-            try
-            {
-                var product = await productApi.GetProductByBarcodeAsync(barcode);
-                if (product != null)
-                {
-                    StartEditing(product);
-                }
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-            }
-        }
-    }
-
-    private void StartEditing(ProductDto product)
-    {
-        editingProductId = product.Id;
-        formModel.Barcode = product.Barcode;
-        formModel.ProductName = product.ProductName;
-        formModel.Brands = product.Brands;
-        formModel.ProductQuantity = product.ProductQuantity;
-        formModel.FrontImageUrl = product.FrontImageUrl;
-        formModel.Nutrients = product.Nutrients ?? new NutrientsDto();
-        message = null;
-        error = null;
-    }
-
-    private void ResetForm()
-    {
-        editingProductId = null;
-        formModel.Barcode = string.Empty;
-        formModel.ProductName = string.Empty;
-        formModel.Brands = string.Empty;
-        formModel.ProductQuantity = string.Empty;
-        formModel.FrontImageUrl = null;
-        formModel.Nutrients = new NutrientsDto();
-    }
-
-    private void PromptDelete(int id)
-    {
-        productToDeleteId = id;
-    }
-
-    private void CancelDelete()
-    {
-        productToDeleteId = null;
-    }
-
-    private async Task ExecuteDelete()
-    {
-        if (!productToDeleteId.HasValue) return;
-
-        isSaving = true;
-        message = null;
-        error = null;
-
-        try
-        {
-            await productApi.DeleteProductAsync(productToDeleteId.Value);
-            message = "Product deleted successfully.";
-            productToDeleteId = null;
-            await LoadProductsAsync(currentPage);
-        }
-        catch (Exception ex)
-        {
-            error = ex.Message;
-        }
-        finally
-        {
-            isSaving = false;
-        }
+        await VM.LoadProductsAsync(VM.Pagination.CurrentPage);
     }
 }

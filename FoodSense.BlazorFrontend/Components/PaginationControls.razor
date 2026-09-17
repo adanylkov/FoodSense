@@ -1,0 +1,48 @@
+@using FoodSense.Common.Models
+
+@if (Pagination != null && Pagination.TotalPages > 1)
+{
+    <nav aria-label="Pagination navigation" class="mt-4">
+        <ul class="pagination justify-content-center gap-1">
+            <li class="page-item @(!Pagination.HasPreviousPage ? "disabled" : "")">
+                <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                        @onclick="() => ChangePage(Pagination.CurrentPage - 1)"
+                        disabled="@(!Pagination.HasPreviousPage)">
+                    Previous
+                </button>
+            </li>
+
+            @for (int i = 1; i <= Pagination.TotalPages; i++)
+            {
+                int pageNumber = i;
+                <li class="page-item @(pageNumber == Pagination.CurrentPage ? "active" : "")">
+                    <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                            @onclick="() => ChangePage(pageNumber)">
+                        @pageNumber
+                    </button>
+                </li>
+            }
+
+            <li class="page-item @(!Pagination.HasNextPage ? "disabled" : "")">
+                <button class="page-link rounded-3 border-0 shadow-sm px-3" 
+                        @onclick="() => ChangePage(Pagination.CurrentPage + 1)"
+                        disabled="@(!Pagination.HasNextPage)">
+                    Next
+                </button>
+            </li>
+        </ul>
+    </nav>
+}
+
+@code {
+    [Parameter, EditorRequired] public PaginationModel Pagination { get; set; } = default!;
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= Pagination.TotalPages && page != Pagination.CurrentPage)
+        {
+            await OnPageChanged.InvokeAsync(page);
+        }
+    }
+}
