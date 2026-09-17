@@ -18,6 +18,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>(); 
 builder.Services.AddScoped<IPantryRepository, PantryRepository>();
 builder.Services.AddScoped<IPantryService, PantryService>();
+builder.Services.AddScoped<IProductMappingRepository, ProductMappingRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorFrontend", policy =>

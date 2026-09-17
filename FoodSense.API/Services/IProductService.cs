@@ -15,4 +15,7 @@ public interface IProductService
     Task<Product> CreateProductAsync(Product product);
     Task<Product?> UpdateProductAsync(int id, Product product);
     Task<bool> DeleteProductAsync(int id);
+    Task<Product?> GetProductByMappingNameAsync(string name);
+    Task<IEnumerable<Product?>> GetProductsByMappingNamesAsync(IEnumerable<string> names);
+    Task AddProductMappingAsync(string mappingName, int productId);
 }

@@ -1,6 +1,8 @@
+@using System.Diagnostics
 @using FoodSense.Common.Models
 @using FoodSense.ReceiptReader
 @inject IReceiptReaderFactory ReceiptReaderFactory
+@inject HttpClient Http
 
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -50,7 +52,7 @@
                                     <td>
                                         <input type="checkbox" checked="@item.IsSelected" @onchange="(e => ToggleReceiptItemSelection(item, (bool?)e.Value ?? false))" />
                                     </td>
-                                    <td>@item.Item.ProductName</td>
+                                    <td>@(item.IsMatched ? item.MatchedProductName : item.Item.ProductName)</td>
                                     <td>@(string.IsNullOrWhiteSpace(item.Item.Barcode) ? "-" : item.Item.Barcode)</td>
                                 </tr>
                             }
@@ -94,10 +96,16 @@
     private string? error;
     private List<ReceiptPreviewItem> receiptPreviewItems = [];
 
+    private bool isLoadingMatch;
+    private ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts;
+
     private sealed class ReceiptPreviewItem
     {
         public required ProductDto Item { get; init; }
         public bool IsSelected { get; set; } = true;
+        public bool IsMatched { get; set; } = false;
+        public string? MatchedBarcode { get; set; }
+        public string? MatchedProductName { get; set; }
     }
 
     private bool AllReceiptItemsSelected => receiptPreviewItems.Count > 0 && receiptPreviewItems.All(item => item.IsSelected);
@@ -126,6 +134,11 @@
                 .Select(item => new ReceiptPreviewItem { Item = item, IsSelected = true })
                 .ToList();
 
+            if (receiptPreviewItems.Count > 0)
+            {
+                await MatchProductsAsync();
+            }
+
             if (receiptPreviewItems.Count == 0)
             {
                 error = "No receipt items could be parsed from this file.";
@@ -139,6 +152,54 @@
         finally
         {
             isLoadingReceipt = false;
+        }
+    }
+
+    private async Task MatchProductsAsync()
+    {
+        isLoadingMatch = true;
+        matchedProducts = null;
+        try
+        {
+            var names = receiptPreviewItems
+                .Where(i => i.IsSelected)
+                .Select(i => i.Item.ProductName)
+                .ToList();
+
+            if (names.Any())
+            {
+                var response = await Http.PostAsJsonAsync("api/productmatching/match", names);
+                if (response.IsSuccessStatusCode)
+                {
+                    matchedProducts = await response.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<ProductMappingDto>>>();
+
+                    foreach (var (i, item) in matchedProducts?.Data?.Index() ?? [])
+                    {
+                        if (receiptPreviewItems is null) continue;
+                        if (receiptPreviewItems.Count <= i) break;
+
+                        var receiptPreviewItem = receiptPreviewItems[i];
+                        if (receiptPreviewItem.Item.ProductName != item.ProductName) {
+                            throw new InvalidOperationException($"Mismatched product names: expected '{receiptPreviewItem.Item.ProductName}', got '{item.ProductName}'");
+                        };
+
+                        if (!string.IsNullOrWhiteSpace(item.Barcode))
+                        {
+                            receiptPreviewItem.IsMatched = true;
+                            receiptPreviewItem.MatchedBarcode = item.Barcode;
+                            receiptPreviewItem.MatchedProductName = item.ProductName;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error matching products: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingMatch = false;
         }
     }
 
@@ -158,9 +219,27 @@
 
     private async Task ConfirmReceiptItemsAsync()
     {
-        // Note: The original implementation of ConfirmReceiptItemsAsync was commented out 
-        // and relied on methods not present in the provided context (e.g., EnsureProductExistsAsync).
-        // For now, this component notifies the parent via EventCallback when confirmation is requested.
+        if (receiptPreviewItems.Count == 0) return;
+
+        var itemsToAdd = receiptPreviewItems
+            .Where(i => i.IsSelected)
+            .ToList();
+
+        foreach (var item in itemsToAdd)
+        {
+            if (!item.IsMatched)
+            {
+                // This item was not matched, user needs to provide barcode manually
+                // In a real app, we might show a modal here or let them type it in the UI
+                // For now, we just skip it or notify the user
+            }
+            else
+            {
+                // Item was matched, we can proceed to add it
+                // We'll need to call a service to add it to the pantry
+            }
+        }
+
         await OnReceiptItemsAdded.InvokeAsync();
     }
 }

@@ -7,6 +7,7 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Product> Products { get; set; }
     public DbSet<PantryItem> PantryItems { get; set; }
+    public DbSet<ProductMapping> ProductMappings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -33,6 +34,17 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
 
             // Index for faster lookups by Product and UserId (when available)
             entity.HasIndex(pi => new { pi.ProductId, pi.UserId });
+        });
+
+        modelBuilder.Entity<ProductMapping>(entity =>
+        {
+            entity.HasIndex(pm => pm.ProductName)
+                .IsUnique();
+
+            entity.HasOne(pm => pm.Product)
+                .WithMany()
+                .HasForeignKey(pm => pm.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

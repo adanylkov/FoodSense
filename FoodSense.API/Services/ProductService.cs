@@ -6,7 +6,8 @@ namespace FoodSense.API.Services;
 
 public class ProductService(
     IProductRepository productRepository, 
-    IOpenFoodFactsClient foodFactsClient) : IProductService
+    IOpenFoodFactsClient foodFactsClient,
+    IProductMappingRepository productMappingRepository) : IProductService
 {
     public async Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize) 
         => await productRepository.GetAllAsync(page, pageSize);
@@ -53,5 +54,29 @@ public class ProductService(
 
         await productRepository.DeleteAsync(id);
         return true;
+    }
+
+    public async Task<Product?> GetProductByMappingNameAsync(string name)
+    {
+        var mapping = await productMappingRepository.GetByProductNameAsync(name);
+        return mapping?.Product;
+    }
+
+    public async Task<IEnumerable<Product?>> GetProductsByMappingNamesAsync(IEnumerable<string> names)
+    {
+        var mappings = await productMappingRepository.GetByProductNamesAsync(names);
+        return mappings.Select(m => m.Product);
+    }
+
+
+    public async Task AddProductMappingAsync(string mappingName, int productId)
+    {
+        var mapping = new ProductMapping
+        {
+            ProductName = mappingName,
+            ProductId = productId
+        };
+        await productMappingRepository.AddAsync(mapping);
+        await productMappingRepository.SaveChangesAsync();
     }
 }
