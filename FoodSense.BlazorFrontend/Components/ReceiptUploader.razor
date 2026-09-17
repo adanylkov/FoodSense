@@ -1,8 +1,10 @@
 @using System.Diagnostics
 @using FoodSense.Common.Models
 @using FoodSense.ReceiptReader
+@using FoodSense.Services
 @inject IReceiptReaderFactory ReceiptReaderFactory
 @inject HttpClient Http
+@inject IProductApiService productApiService
 
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -53,7 +55,17 @@
                                         <input type="checkbox" checked="@item.IsSelected" @onchange="(e => ToggleReceiptItemSelection(item, (bool?)e.Value ?? false))" />
                                     </td>
                                     <td>@(item.IsMatched ? item.MatchedProductName : item.Item.ProductName)</td>
-                                    <td>@(string.IsNullOrWhiteSpace(item.Item.Barcode) ? "-" : item.Item.Barcode)</td>
+                                    @if (item is {IsMatched: true, MatchedBarcode: not null})
+                                    {
+                                        <td>@item.MatchedBarcode</td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm" placeholder="Enter barcode" @onchange="(e) => OnBarcodeChanged(e, item)"/>
+                                        </td>
+                                    }
+                                    <td>@item.Item.Barcode</td>
                                 </tr>
                             }
                         </tbody>
@@ -177,18 +189,13 @@
                     {
                         if (receiptPreviewItems is null) continue;
                         if (receiptPreviewItems.Count <= i) break;
+                        if (string.IsNullOrWhiteSpace(item.Barcode)) continue;
 
                         var receiptPreviewItem = receiptPreviewItems[i];
-                        if (receiptPreviewItem.Item.ProductName != item.ProductName) {
-                            throw new InvalidOperationException($"Mismatched product names: expected '{receiptPreviewItem.Item.ProductName}', got '{item.ProductName}'");
-                        };
 
-                        if (!string.IsNullOrWhiteSpace(item.Barcode))
-                        {
-                            receiptPreviewItem.IsMatched = true;
-                            receiptPreviewItem.MatchedBarcode = item.Barcode;
-                            receiptPreviewItem.MatchedProductName = item.ProductName;
-                        }
+                        receiptPreviewItem.IsMatched = true;
+                        receiptPreviewItem.MatchedBarcode = item.Barcode;
+                        receiptPreviewItem.MatchedProductName = item.ProductName;
                     }
                 }
             }
@@ -241,5 +248,31 @@
         }
 
         await OnReceiptItemsAdded.InvokeAsync();
+    }
+
+    private async Task OnBarcodeChanged(ChangeEventArgs e, ReceiptPreviewItem item)
+    {
+        var newBarcode = e.Value?.ToString();
+        if (!string.IsNullOrWhiteSpace(newBarcode))
+        {
+            item.Item.Barcode = newBarcode;
+            try {
+                var product = await productApiService.GetProductByBarcodeAsync(newBarcode);
+                if (product is not null) {
+                    var response = await Http.PostAsJsonAsync("api/productmatching/mapping", new ProductMappingDto { ProductName = item.Item.ProductName, Barcode = newBarcode, ProductId = product.Id });
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        item.IsMatched = true;
+                        item.MatchedBarcode = newBarcode;
+                        item.MatchedProductName = product.ProductName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                error = $"Error fetching product by barcode: {ex.Message}";
+            }
+        }
     }
 }
