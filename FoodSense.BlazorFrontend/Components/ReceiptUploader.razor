@@ -3,8 +3,8 @@
 @using FoodSense.ReceiptReader
 @using FoodSense.Services
 @inject IReceiptReaderFactory ReceiptReaderFactory
-@inject HttpClient Http
-@inject IProductApiService productApiService
+@inject IProductApiService ProductApiService
+@inject IMatchApiService MatchApiService
 
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -45,6 +45,7 @@
                                 <th style="width: 48px;"></th>
                                 <th>Name</th>
                                 <th>Barcode</th>
+                                <th>Match</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,12 +53,22 @@
                             {
                                 <tr>
                                     <td>
-                                        <input type="checkbox" checked="@item.IsSelected" @onchange="(e => ToggleReceiptItemSelection(item, (bool?)e.Value ?? false))" />
+                                        <input type="checkbox" checked="@(item.IsSelected && item.HasCandidate)" disabled="@(item.HasCandidate is false)" @onchange="(e => ToggleReceiptItemSelection(item, (bool?)e.Value ?? false))" />
                                     </td>
-                                    <td>@(item.IsMatched ? item.MatchedProductName : item.Item.ProductName)</td>
-                                    @if (item is {IsMatched: true, MatchedBarcode: not null})
+                                    <td>
+                                        @{
+                                            var className = item switch {
+                                                
+                                                { IsMatched: true, HasCandidate: true } => null,
+                                                { IsMatched: false, HasCandidate: true } => "text-warning",
+                                                _ => "text-muted"
+                                            };
+                                            <p class=@className>@item.Name</p>
+                                        }
+                                    </td>
+                                    @if (item is {IsMatched: true, BarcodeCandidate: not null})
                                     {
-                                        <td>@item.MatchedBarcode</td>
+                                        <td>@item.BarcodeCandidate</td>
                                     }
                                     else
                                     {
@@ -65,7 +76,18 @@
                                             <input type="number" class="form-control form-control-sm" placeholder="Enter barcode" @onchange="(e) => OnBarcodeChanged(e, item)"/>
                                         </td>
                                     }
-                                    <td>@item.Item.Barcode</td>
+                                    <td>
+                                        @if (!item.IsMatched && item.HasCandidate) {
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AddProductMappingAsync(item)">Confirm Match</button>
+                                            <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => { item.BarcodeCandidate = null; item.ProductName = null; }">Unmatch</button>
+                                        }
+                                        else if (item.IsMatched) {
+                                            <span class="badge bg-success">Matched</span>
+                                        }
+                                        else {
+                                            <span class="text-muted">No match</span>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -108,7 +130,6 @@
     private string? error;
     private List<ReceiptPreviewItem> receiptPreviewItems = [];
 
-    private bool isLoadingMatch;
     private ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts;
 
     private sealed class ReceiptPreviewItem
@@ -116,8 +137,11 @@
         public required ProductDto Item { get; init; }
         public bool IsSelected { get; set; } = true;
         public bool IsMatched { get; set; } = false;
-        public string? MatchedBarcode { get; set; }
-        public string? MatchedProductName { get; set; }
+        public string Name => HasCandidate ? ProductName! : Item.ProductName;
+        public bool HasCandidate => !string.IsNullOrWhiteSpace(BarcodeCandidate) && !string.IsNullOrWhiteSpace(ProductName);
+        public string? BarcodeCandidate { get; set; }
+        public int? ProductIdCandidate { get; set; }
+        public string? ProductName { get; set; }
     }
 
     private bool AllReceiptItemsSelected => receiptPreviewItems.Count > 0 && receiptPreviewItems.All(item => item.IsSelected);
@@ -169,7 +193,6 @@
 
     private async Task MatchProductsAsync()
     {
-        isLoadingMatch = true;
         matchedProducts = null;
         try
         {
@@ -178,14 +201,12 @@
                 .Select(i => i.Item.ProductName)
                 .ToList();
 
-            if (names.Any())
+            if (names.Count > 0)
             {
-                var response = await Http.PostAsJsonAsync("api/productmatching/match", names);
-                if (response.IsSuccessStatusCode)
+                matchedProducts = await MatchApiService.MatchProductsAsync(names);
+                if (matchedProducts is not null)
                 {
-                    matchedProducts = await response.Content.ReadFromJsonAsync<ApiResponse<IEnumerable<ProductMappingDto>>>();
-
-                    foreach (var (i, item) in matchedProducts?.Data?.Index() ?? [])
+                    foreach (var (i, item) in matchedProducts.Data?.Index() ?? [])
                     {
                         if (receiptPreviewItems is null) continue;
                         if (receiptPreviewItems.Count <= i) break;
@@ -194,8 +215,8 @@
                         var receiptPreviewItem = receiptPreviewItems[i];
 
                         receiptPreviewItem.IsMatched = true;
-                        receiptPreviewItem.MatchedBarcode = item.Barcode;
-                        receiptPreviewItem.MatchedProductName = item.ProductName;
+                        receiptPreviewItem.BarcodeCandidate = item.Barcode;
+                        receiptPreviewItem.ProductName = item.ProductName;
                     }
                 }
             }
@@ -204,15 +225,14 @@
         {
             error = $"Error matching products: {ex.Message}";
         }
-        finally
-        {
-            isLoadingMatch = false;
-        }
     }
 
     private void ToggleReceiptItemSelection(ReceiptPreviewItem item, bool isSelected)
     {
-        item.IsSelected = isSelected;
+        if (item.HasCandidate)
+        {
+            item.IsSelected = isSelected;
+        }
     }
 
     private void ToggleSelectAllReceiptItems(ChangeEventArgs args)
@@ -220,7 +240,7 @@
         var isChecked = args.Value as bool? ?? false;
         foreach (var item in receiptPreviewItems)
         {
-            item.IsSelected = isChecked;
+            item.IsSelected = item.HasCandidate ? isChecked : item.IsSelected;
         }
     }
 
@@ -250,6 +270,36 @@
         await OnReceiptItemsAdded.InvokeAsync();
     }
 
+    private async Task AddProductMappingAsync(ReceiptPreviewItem item)
+    {
+        Debug.Assert(item.HasCandidate, "Item must be matched with a candidate before adding a product mapping.");
+        Debug.Assert(!string.IsNullOrWhiteSpace(item.BarcodeCandidate), "Item must have a barcode before adding a product mapping.");
+        Debug.Assert(!string.IsNullOrWhiteSpace(item.ProductName), "Item must have a product name before adding a product mapping.");
+        Debug.Assert(item.ProductIdCandidate.HasValue, "Item must have a product ID before adding a product mapping.");
+
+        var productMapping = new ProductMappingDto
+        {
+            Barcode = item.BarcodeCandidate,
+            ProductName = item.Item.ProductName,
+            ProductId = item.ProductIdCandidate.Value
+        };
+
+        try
+        {
+            if (await MatchApiService.AddProductMappingAsync(productMapping) is false)
+            {
+                error = $"Failed to add product mapping for {item.Item.ProductName}.";
+            }
+            else {
+                item.IsMatched = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error adding product mapping: {ex.Message}";
+        }
+    }
+
     private async Task OnBarcodeChanged(ChangeEventArgs e, ReceiptPreviewItem item)
     {
         var newBarcode = e.Value?.ToString();
@@ -257,16 +307,12 @@
         {
             item.Item.Barcode = newBarcode;
             try {
-                var product = await productApiService.GetProductByBarcodeAsync(newBarcode);
+                var product = await ProductApiService.GetProductByBarcodeAsync(newBarcode);
                 if (product is not null) {
-                    var response = await Http.PostAsJsonAsync("api/productmatching/mapping", new ProductMappingDto { ProductName = item.Item.ProductName, Barcode = newBarcode, ProductId = product.Id });
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        item.IsMatched = true;
-                        item.MatchedBarcode = newBarcode;
-                        item.MatchedProductName = product.ProductName;
-                    }
+                    item.BarcodeCandidate = newBarcode;
+                    item.ProductName = product.ProductName;
+                    item.ProductIdCandidate = product.Id;
                 }
             }
             catch (Exception ex)
@@ -275,4 +321,5 @@
             }
         }
     }
+
 }

@@ -18,6 +18,7 @@ builder.Services.AddHttpClient("FoodSenseApi", client =>
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("FoodSenseApi"));
 builder.Services.AddScoped<IReceiptReaderFactory, ReceiptReaderFactory>();
 builder.Services.AddScoped<IProductApiService, ProductApiService>();
+builder.Services.AddScoped<IMatchApiService, MatchApiService>();
 builder.Services.AddScoped<ProductsViewModel>();
 
 var app = builder.Build();
