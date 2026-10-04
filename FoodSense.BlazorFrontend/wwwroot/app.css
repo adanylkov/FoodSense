@@ -50,6 +50,18 @@ h1:focus {
     border-color: #929292;
 }
 
+.barcode-scanner-host {
+    width: min(100%, 640px);
+}
+
+.barcode-scanner-host video {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 9rem);
+    object-fit: contain;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
     color: var(--bs-secondary-color);
     text-align: end;

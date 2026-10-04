@@ -137,8 +137,16 @@
             </button>
         </div>
         <div class="flex-grow-1 d-flex align-items-center justify-content-center p-3 overflow-auto">
-            <div class="w-100" style="max-width: 640px;">
-                <BarcodeReader StartCameraAutomatically="true" OnBarcodeReceived="HandleBarcodeReceivedAsync" />
+            <div class="barcode-scanner-host w-100">
+                <BarcodeReader StartCameraAutomatically="true"
+                               ShowStop="false"
+                               ShowStart="false"
+                               ShowReset="false"
+                               ShowToggleTorch="false"
+                               ShowVideoDeviceList="false"
+                               VideoWidth="640"
+                               VideoHeight="480"
+                               OnBarcodeReceived="HandleBarcodeReceivedAsync" />
             </div>
         </div>
     </div>
