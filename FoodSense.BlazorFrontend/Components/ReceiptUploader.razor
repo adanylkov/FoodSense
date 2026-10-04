@@ -46,6 +46,7 @@
                                 <th>Name</th>
                                 <th>Barcode</th>
                                 <th>Match</th>
+                                <th style="width: 48px;"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,6 +88,11 @@
                                         else {
                                             <span class="text-muted">No match</span>
                                         }
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-light btn-sm rounded-circle shadow-sm text-danger" title="Delete receipt item" aria-label="Delete @item.Name" @onclick="() => DeleteReceiptItem(item)">
+                                            🗑️
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -242,6 +248,11 @@
         {
             item.IsSelected = item.HasCandidate ? isChecked : item.IsSelected;
         }
+    }
+
+    private void DeleteReceiptItem(ReceiptPreviewItem item)
+    {
+        receiptPreviewItems.Remove(item);
     }
 
     private async Task ConfirmReceiptItemsAsync()
