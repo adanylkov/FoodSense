@@ -1,5 +1,6 @@
 using FoodSense.API.Data.Models;
 using FoodSense.API.Repositories;
+using FoodSense.Common.Models;
 
 namespace FoodSense.API.Services;
 
@@ -12,7 +13,7 @@ public class PantryService(IPantryRepository pantryRepository) : IPantryService
         return await pantryRepository.AddAsync(pantryItem);
     }
 
-    public async Task<PantryItem> AddPantryItemAsync(Product product, PantryItem pantryItem)
+    public async Task<PantryItem> AddPantryItemAsync(ProductDto product, PantryItem pantryItem)
     {
         pantryItem.ProductId = product.Id;
         pantryItem.UserId = null;

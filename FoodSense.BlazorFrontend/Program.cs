@@ -1,3 +1,4 @@
+using FoodSense.API.Services;
 using FoodSense.BlazorFrontend.Components;
 using FoodSense.ReceiptReader;
 using FoodSense.Services;

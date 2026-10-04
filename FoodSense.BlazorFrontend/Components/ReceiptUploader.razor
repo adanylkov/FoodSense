@@ -1,4 +1,5 @@
 @using System.Diagnostics
+@using FoodSense.API.Services
 @using FoodSense.Common.Models
 @using FoodSense.ReceiptReader
 @using FoodSense.Services
@@ -260,23 +261,36 @@
         if (receiptPreviewItems.Count == 0) return;
 
         var itemsToAdd = receiptPreviewItems
-            .Where(i => i.IsSelected)
-            .ToList();
+            .Where(i => i is { IsSelected: true, IsMatched: true });
 
-        foreach (var item in itemsToAdd)
+        foreach (var receiptItem in itemsToAdd)
         {
-            if (!item.IsMatched)
+            Debug.Assert(receiptItem.HasCandidate, "Receipt item must have a candidate before adding to pantry.");
+            Debug.Assert(!string.IsNullOrWhiteSpace(receiptItem.BarcodeCandidate), "Receipt item must have a barcode before adding to pantry.");
+
+            try
             {
-                // This item was not matched, user needs to provide barcode manually
-                // In a real app, we might show a modal here or let them type it in the UI
-                // For now, we just skip it or notify the user
+                var product = await ProductApiService.GetProductByBarcodeAsync(receiptItem.BarcodeCandidate!);
+                if (product is not null)
+                {
+
+                    await ProductApiService.CreatePantryItemAsync(product.Id, new PantryItemDto {
+                        ProductId = product.Id,
+                        Quantity = receiptItem.Item.Quantity,
+                    });
+                }
+                else
+                {
+                    error = $"Product with barcode {receiptItem.BarcodeCandidate} not found.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // Item was matched, we can proceed to add it
-                // We'll need to call a service to add it to the pantry
+                error = $"Error adding product to pantry: {ex.Message}";
             }
         }
+
+        receiptPreviewItems.Clear();
 
         await OnReceiptItemsAdded.InvokeAsync();
     }
