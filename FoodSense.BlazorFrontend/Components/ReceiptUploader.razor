@@ -1,5 +1,4 @@
 @using System.Diagnostics
-@using BlazorBarcodeScanner.ZXing.JS
 @using FoodSense.API.Services
 @using FoodSense.Common.Models
 @using FoodSense.ReceiptReader
@@ -19,17 +18,6 @@
 
         <div class="d-flex flex-wrap gap-3 align-items-center">
             <InputFile OnChange="HandleReceiptFileSelected" accept=".json,application/json" class="form-control w-auto" />
-        </div>
-
-        <div class="mt-4 border rounded-4 p-3">
-            <h3 class="h6 fw-semibold text-dark mb-3">Scan a barcode</h3>
-            <BarcodeReader StartCameraAutomatically="true" OnBarcodeReceived="HandleBarcodeReceivedAsync" />
-            @if (!string.IsNullOrWhiteSpace(scannedBarcode))
-            {
-                <div class="alert alert-success mt-3 mb-0" role="status">
-                    Scanned barcode: <strong>@scannedBarcode</strong>
-                </div>
-            }
         </div>
 
         @if (isLoadingReceipt)
@@ -147,7 +135,6 @@
     private bool isLoadingReceipt;
     private bool isAddingReceiptItems;
     private string? error;
-    private string? scannedBarcode;
     private List<ReceiptPreviewItem> receiptPreviewItems = [];
 
     private ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts;
@@ -165,12 +152,6 @@
     }
 
     private bool AllReceiptItemsSelected => receiptPreviewItems.Count > 0 && receiptPreviewItems.All(item => item.IsSelected);
-
-    private Task HandleBarcodeReceivedAsync(BarcodeReceivedEventArgs args)
-    {
-        scannedBarcode = args.BarcodeText;
-        return Task.CompletedTask;
-    }
 
     private async Task HandleReceiptFileSelected(InputFileChangeEventArgs args)
     {

@@ -1,4 +1,5 @@
 @using FoodSense.Common.Models
+@using BlazorBarcodeScanner.ZXing.JS
 
 <aside class="col-lg-4">
     <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
@@ -20,11 +21,20 @@
             <EditForm Model="FormModel" OnValidSubmit="OnSubmit">
                 <div class="mb-3">
                     <label for="barcodeInput" class="form-label small fw-semibold">Barcode</label>
-                    <InputText id="barcodeInput" 
-                               class="form-control rounded-3" 
-                               placeholder="e.g. 5449000000996"
-                               @bind-Value="FormModel.Barcode"
-                               @onblur="() => OnBarcodeBlur.InvokeAsync(FormModel.Barcode)" />
+                    <div class="input-group">
+                        <InputText id="barcodeInput"
+                                   class="form-control"
+                                   placeholder="e.g. 5449000000996"
+                                   @bind-Value="FormModel.Barcode"
+                                   @onblur="() => OnBarcodeBlur.InvokeAsync(FormModel.Barcode)" />
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                title="Scan barcode with camera"
+                                aria-label="Scan barcode with camera"
+                                @onclick="OpenBarcodeScanner">
+                            <span aria-hidden="true">&#128247;</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -117,8 +127,26 @@
     </div>
 </aside>
 
+@if (isBarcodeScannerOpen)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex flex-column" style="z-index: 2000;">
+        <div class="d-flex align-items-center justify-content-between p-3 text-white">
+            <h2 class="h5 mb-0">Scan barcode</h2>
+            <button type="button" class="btn btn-light" @onclick="CloseBarcodeScanner">
+                Close
+            </button>
+        </div>
+        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-3 overflow-auto">
+            <div class="w-100" style="max-width: 640px;">
+                <BarcodeReader StartCameraAutomatically="true" OnBarcodeReceived="HandleBarcodeReceivedAsync" />
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private const string PlaceholderImagePath = "/images/product-placeholder.svg";
+    private bool isBarcodeScannerOpen;
 
     [Parameter, EditorRequired] public required ProductDto FormModel { get; set; }
     [Parameter] public int? EditingProductId { get; set; }
@@ -129,6 +157,23 @@
     [Parameter] public EventCallback<string?> OnBarcodeBlur { get; set; }
 
     private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
+
+    private void OpenBarcodeScanner()
+    {
+        isBarcodeScannerOpen = true;
+    }
+
+    private void CloseBarcodeScanner()
+    {
+        isBarcodeScannerOpen = false;
+    }
+
+    private async Task HandleBarcodeReceivedAsync(BarcodeReceivedEventArgs args)
+    {
+        FormModel.Barcode = args.BarcodeText;
+        isBarcodeScannerOpen = false;
+        await OnBarcodeBlur.InvokeAsync(FormModel.Barcode);
+    }
 
     private string GetImageSource(string? imageUrl)
         => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
