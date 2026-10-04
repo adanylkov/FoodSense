@@ -4,7 +4,7 @@ namespace FoodSense.ReceiptReader;
 
 public interface IReceiptReader
 {
-    Task<IEnumerable<ProductDto>> ReadAsync(Stream stream);
+    Task<IEnumerable<ReceiptItem>> ReadAsync(Stream stream);
 }
 
 public interface IReceiptReaderFactory

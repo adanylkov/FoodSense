@@ -134,10 +134,10 @@
 
     private sealed class ReceiptPreviewItem
     {
-        public required ProductDto Item { get; init; }
+        public required ReceiptItem Item { get; init; }
         public bool IsSelected { get; set; } = true;
         public bool IsMatched { get; set; } = false;
-        public string Name => HasCandidate ? ProductName! : Item.ProductName;
+        public string Name => HasCandidate ? ProductName! : Item.Name;
         public bool HasCandidate => !string.IsNullOrWhiteSpace(BarcodeCandidate) && !string.IsNullOrWhiteSpace(ProductName);
         public string? BarcodeCandidate { get; set; }
         public int? ProductIdCandidate { get; set; }
@@ -198,7 +198,7 @@
         {
             var names = receiptPreviewItems
                 .Where(i => i.IsSelected)
-                .Select(i => i.Item.ProductName)
+                .Select(i => i.Item.Name)
                 .ToList();
 
             if (names.Count > 0)
@@ -280,7 +280,7 @@
         var productMapping = new ProductMappingDto
         {
             Barcode = item.BarcodeCandidate,
-            ProductName = item.Item.ProductName,
+            ProductName = item.Item.Name,
             ProductId = item.ProductIdCandidate.Value
         };
 
@@ -288,7 +288,7 @@
         {
             if (await MatchApiService.AddProductMappingAsync(productMapping) is false)
             {
-                error = $"Failed to add product mapping for {item.Item.ProductName}.";
+                error = $"Failed to add product mapping for {item.Item.Name}.";
             }
             else {
                 item.IsMatched = true;
@@ -305,7 +305,7 @@
         var newBarcode = e.Value?.ToString();
         if (!string.IsNullOrWhiteSpace(newBarcode))
         {
-            item.Item.Barcode = newBarcode;
+            item.BarcodeCandidate = newBarcode;
             try {
                 var product = await ProductApiService.GetProductByBarcodeAsync(newBarcode);
                 if (product is not null) {
