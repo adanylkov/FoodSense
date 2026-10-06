@@ -50,10 +50,12 @@
                      OnCancel="VM.ResetForm"
                      OnBarcodeBlur="VM.HandleBarcodeInputAsync" />
 
-        <ProductList Products="VM.Products" 
+                <ProductList Products="VM.Products"
                      IsLoading="VM.IsLoading" 
+                             PantryOnly="VM.PantryOnly"
                      Pagination="VM.Pagination" 
                      OnPageChanged="VM.LoadProductsAsync" 
+                             OnFilterChanged="VM.SetPantryOnlyAsync"
                      OnQuickAddPantryItem="VM.QuickAddPantryItemAsync" 
                      OnOpenPantryModal="VM.OpenPantryModal" 
                      OnStartEditing="VM.StartEditing" 

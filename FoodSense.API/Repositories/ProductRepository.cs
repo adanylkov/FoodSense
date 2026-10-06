@@ -6,8 +6,8 @@ namespace FoodSense.API.Repositories;
 
 public interface IProductRepository
 {
-    Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize);
-    Task<int> GetTotalCountAsync();
+    Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize, bool hasPantryItems = false);
+    Task<int> GetTotalCountAsync(bool hasPantryItems = false);
     Task<Product?> GetByIdAsync(int id);
     Task<Product?> GetByBarcodeAsync(string barcode);
     Task AddAsync(Product product);
@@ -17,10 +17,16 @@ public interface IProductRepository
 
 public class ProductRepository(FoodSenseDbContext context) : IProductRepository
 {
-    public async Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize)
+    public async Task<IEnumerable<Product>> GetAllAsync(int page, int pageSize, bool hasPantryItems = false)
     {
-        return await context.Products
-            .AsNoTracking()
+        var query = context.Products.AsNoTracking();
+
+        if (hasPantryItems)
+        {
+            query = query.Where(p => p.PantryItems.Any(item => item.Quantity > 0));
+        }
+
+        return await query
             .OrderBy(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -28,9 +34,16 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
             .ToListAsync();
     }
 
-    public async Task<int> GetTotalCountAsync()
+    public async Task<int> GetTotalCountAsync(bool hasPantryItems = false)
     {
-        return await context.Products.CountAsync();
+        var query = context.Products.AsQueryable();
+
+        if (hasPantryItems)
+        {
+            query = query.Where(p => p.PantryItems.Any(item => item.Quantity > 0));
+        }
+
+        return await query.CountAsync();
     }
 
     public async Task<Product?> GetByIdAsync(int id)

@@ -10,7 +10,10 @@ namespace FoodSense.API.Controllers
     public class FoodController(IProductService productService) : ControllerBase
     {
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+        public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50,
+            [FromQuery] bool hasPantryItems = false)
         {
             if (page < 1)
             {
@@ -22,8 +25,8 @@ namespace FoodSense.API.Controllers
                 return BadRequest("Page size must be between 1 and 200.");
             }
 
-            var products = await productService.GetProductsAsync(page, pageSize);
-            var totalCount = await productService.GetTotalProductCountAsync();
+            var products = await productService.GetProductsAsync(page, pageSize, hasPantryItems);
+            var totalCount = await productService.GetTotalProductCountAsync(hasPantryItems);
             return Ok(new ApiResponse<IEnumerable<ProductDto>>
             {
                 Data = products.ToProductDtos(),

@@ -39,6 +39,36 @@ public class FoodControllerTests
         products.Last().Barcode.Should().Be("50");
     }
 
+    [Fact]
+    public async Task GetProducts_WithPantryFilter_ShouldReturnOnlyProductsInStock()
+    {
+        await using var context = CreateContext();
+        context.Products.AddRange(
+            new Product
+            {
+                Barcode = "1",
+                PantryItems = new List<PantryItem> { new() { Quantity = 2 } }
+            },
+            new Product
+            {
+                Barcode = "2",
+                PantryItems = new List<PantryItem> { new() { Quantity = 0 } }
+            },
+            new Product { Barcode = "3" });
+        await context.SaveChangesAsync();
+
+        var productRepository = new ProductRepository(context);
+        var productService = new ProductService(productRepository, null!, null!);
+        var controller = new FoodController(productService);
+
+        var result = await controller.GetProducts(page: 1, pageSize: 25, hasPantryItems: true);
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductDto>>>().Subject;
+
+        response.Data.Should().ContainSingle().Which.Barcode.Should().Be("1");
+        response.TotalCount.Should().Be(1);
+    }
+
     [Theory]
     [InlineData(0, 10)]
     [InlineData(1, 0)]

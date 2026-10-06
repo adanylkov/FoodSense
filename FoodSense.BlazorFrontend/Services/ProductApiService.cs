@@ -10,7 +10,7 @@ public interface IProductApiService
     Task<HttpResponseMessage> DeletePantryItemAsync(int pantryItemId);
     Task<HttpResponseMessage> DeleteProductAsync(int id);
     Task<ProductDto?> GetProductByBarcodeAsync(string barcode);
-    Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize);
+    Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false);
     Task<HttpResponseMessage> QuickAddPantryItemAsync(int productId);
     Task<HttpResponseMessage> UpdatePantryItemAsync(int pantryItemId, PantryItemDto pantryItem);
     Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product);
@@ -25,10 +25,10 @@ public class ProductApiService : IProductApiService
         _http = http;
     }
 
-    public async Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize)
+    public async Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false)
     {
         return await _http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>(
-            $"api/Food/GetProducts?page={page}&pageSize={pageSize}");
+            $"api/Food/GetProducts?page={page}&pageSize={pageSize}&hasPantryItems={hasPantryItems}");
     }
 
     public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode)

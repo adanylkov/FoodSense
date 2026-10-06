@@ -8,6 +8,17 @@
         </span>
     </div>
 
+    <div class="nav nav-tabs mb-4" role="tablist" aria-label="Product catalog filters">
+        <button class="nav-link @(PantryOnly ? "" : "active")" type="button"
+                aria-selected="@(!PantryOnly)" @onclick="() => OnFilterChanged.InvokeAsync(false)">
+            All products
+        </button>
+        <button class="nav-link @(PantryOnly ? "active" : "")" type="button"
+                aria-selected="@PantryOnly" @onclick="() => OnFilterChanged.InvokeAsync(true)">
+            Products in stock
+        </button>
+    </div>
+
     @if (IsLoading)
     {
         <div class="text-center py-5 my-5">
@@ -46,6 +57,7 @@
 @code {
     [Parameter] public IEnumerable<ProductDto>? Products { get; set; }
     [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public bool PantryOnly { get; set; }
     [Parameter, EditorRequired] public PaginationModel Pagination { get; set; } = new();
 
     [Parameter] public EventCallback<int> OnPageChanged { get; set; }
@@ -53,4 +65,5 @@
     [Parameter] public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
     [Parameter] public EventCallback<ProductDto> OnStartEditing { get; set; }
     [Parameter] public EventCallback<int> OnPromptDelete { get; set; }
+    [Parameter] public EventCallback<bool> OnFilterChanged { get; set; }
 }

@@ -4,8 +4,8 @@ namespace FoodSense.API.Services;
 
 public interface IProductService
 {
-    Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize);
-    Task<int> GetTotalProductCountAsync();
+    Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false);
+    Task<int> GetTotalProductCountAsync(bool hasPantryItems = false);
     Task<Product?> GetProductByIdAsync(int id);
     Task<Product?> GetProductByBarcodeOrFetchAsync(string barcode);
     Task<Product?> GetProductByBarcodeOrFetchAsync(long barcode)

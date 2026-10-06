@@ -11,6 +11,7 @@ public class ProductsViewModel
     public ProductDto FormModel { get; set; } = new();
     
     public PaginationModel Pagination { get; } = new();
+    public bool PantryOnly { get; private set; }
 
     public int? EditingProductId { get; private set; }
     public int? ProductToDeleteId { get; private set; }
@@ -37,7 +38,7 @@ public class ProductsViewModel
 
         try
         {
-            var response = await _productApi.GetProductsAsync(page, Pagination.PageSize);
+            var response = await _productApi.GetProductsAsync(page, Pagination.PageSize, PantryOnly);
             if (response != null)
             {
                 Products = response.Data?.ToList() ?? [];
@@ -57,6 +58,14 @@ public class ProductsViewModel
         {
             IsLoading = false;
         }
+    }
+
+    public async Task SetPantryOnlyAsync(bool pantryOnly)
+    {
+        if (PantryOnly == pantryOnly) return;
+
+        PantryOnly = pantryOnly;
+        await LoadProductsAsync(1);
     }
 
     public async Task SaveProductAsync()

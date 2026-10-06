@@ -9,11 +9,11 @@ public class ProductService(
     IOpenFoodFactsClient foodFactsClient,
     IProductMappingRepository productMappingRepository) : IProductService
 {
-    public async Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize) 
-        => await productRepository.GetAllAsync(page, pageSize);
+    public async Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false)
+        => await productRepository.GetAllAsync(page, pageSize, hasPantryItems);
 
-    public async Task<int> GetTotalProductCountAsync() 
-        => await productRepository.GetTotalCountAsync();
+    public async Task<int> GetTotalProductCountAsync(bool hasPantryItems = false)
+        => await productRepository.GetTotalCountAsync(hasPantryItems);
 
     public async Task<Product?> GetProductByIdAsync(int id) 
         => await productRepository.GetByIdAsync(id);
