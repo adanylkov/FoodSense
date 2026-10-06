@@ -25,14 +25,17 @@
         </div>
 
         <div class="card-body p-4 d-flex flex-column">
-            <div class="mb-2">
-                <span class="badge bg-secondary-subtle text-secondary rounded-pill extra-small">
-                    @(string.IsNullOrWhiteSpace(Product.Brands) ? "Unbranded" : Product.Brands)
-                </span>
-            </div>
             
             <h3 class="h6 fw-bold text-dark mb-1">@Product.ProductName</h3>
             <p class="text-secondary extra-small mb-3">Barcode: @(string.IsNullOrWhiteSpace(Product.Barcode) ? "-" : Product.Barcode)</p>
+
+            <div class="bg-body-tertiary rounded-3 p-2 mb-3 d-flex align-items-center justify-content-between">
+                <span class="extra-small">
+                    <span class="text-secondary">In Pantry: </span>
+                    <span class="fw-bold text-dark">@(Product.PantryItems?.Sum(p => p.Quantity) ?? 0) item(s)</span>
+                </span>
+                <span class="badge bg-white text-secondary border rounded-pill extra-small">Stock</span>
+            </div>
 
             @if (Product.Nutrients != null)
             {
