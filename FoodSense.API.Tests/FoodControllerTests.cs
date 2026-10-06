@@ -26,7 +26,8 @@ public class FoodControllerTests
 
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
 
         var result = await controller.GetProducts(page: 2, pageSize: 25);
@@ -58,7 +59,8 @@ public class FoodControllerTests
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
 
         var result = await controller.GetProducts(page: 1, pageSize: 25, hasPantryItems: true);
@@ -77,7 +79,8 @@ public class FoodControllerTests
     {
         await using var context = CreateContext();
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
 
         var result = await controller.GetProducts(page, pageSize);
@@ -94,8 +97,8 @@ public class FoodControllerTests
         opfClientMock.Setup(client => client.GetProductByBarcodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((OpenFoodFactProduct?)null);
 
-
-        var productService = new ProductService(productRepository, opfClientMock.Object);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, opfClientMock.Object, productMappingRepository);
         var controller = new FoodController(productService);
 
         var createdProduct = new Product { Barcode = "5901234567890" };
@@ -114,7 +117,8 @@ public class FoodControllerTests
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
         var result = await controller.CreateProduct(new Product { Barcode = "111" });
 
@@ -130,7 +134,8 @@ public class FoodControllerTests
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
         var updated = new Product { Barcode = "222" };
 
@@ -155,7 +160,8 @@ public class FoodControllerTests
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
         var updated = new Product
         {
@@ -183,7 +189,8 @@ public class FoodControllerTests
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
-        var productService = new ProductService(productRepository, null!);
+        var productMappingRepository = new ProductMappingRepository(context);
+        var productService = new ProductService(productRepository, null!, productMappingRepository);
         var controller = new FoodController(productService);
         var result = await controller.DeleteProduct(existing.Id);
 
