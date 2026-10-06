@@ -89,7 +89,13 @@ public class ProductsViewModel
             else
             {
                 FormModel.Id = EditingProductId.Value;
-                await _productApi.UpdateProductAsync(EditingProductId.Value, FormModel);
+                var response = await _productApi.UpdateProductAsync(EditingProductId.Value, FormModel);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    ErrorMessage = $"Failed to update product: {errorMsg}";
+                    return;
+                }
                 SuccessMessage = "Product updated successfully.";
             }
 

@@ -18,7 +18,7 @@
                      style="max-height: 160px;" />
             </div>
 
-            <EditForm Model="FormModel" OnValidSubmit="OnSubmit">
+            <EditForm Model="FormModel" OnValidSubmit="HandleSubmit">
                 <div class="mb-3">
                     <label for="barcodeInput" class="form-label small fw-semibold">Barcode</label>
                     <div class="input-group">
@@ -70,31 +70,31 @@
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Energy (kcal)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.EnergyKcal" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.EnergyKcal" />
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Fat (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Fat" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.Fat" />
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Sat. Fat (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.SaturatedFat" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.SaturatedFat" />
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Carbs (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Carbohydrates" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.Carbohydrates" />
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Sugars (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Sugars" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.Sugars" />
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label extra-small text-secondary mb-1">Proteins (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Proteins" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.Proteins" />
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label extra-small text-secondary mb-1">Salt (g)</label>
-                                        <InputNumber class="form-control form-control-sm" @bind-Value="Nutrients.Salt" />
+                                        <InputNumber class="form-control form-control-sm" step="0.01" @bind-Value="Nutrients.Salt" />
                                     </div>
                                 </div>
                             </div>
@@ -165,6 +165,19 @@
     [Parameter] public EventCallback<string?> OnBarcodeBlur { get; set; }
 
     private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
+
+    private async Task HandleSubmit()
+    {
+        Nutrients.EnergyKcal = Math.Round(Nutrients.EnergyKcal, 2);
+        Nutrients.Fat = Math.Round(Nutrients.Fat, 2);
+        Nutrients.SaturatedFat = Math.Round(Nutrients.SaturatedFat, 2);
+        Nutrients.Carbohydrates = Math.Round(Nutrients.Carbohydrates, 2);
+        Nutrients.Sugars = Math.Round(Nutrients.Sugars, 2);
+        Nutrients.Proteins = Math.Round(Nutrients.Proteins, 2);
+        Nutrients.Salt = Math.Round(Nutrients.Salt, 2);
+
+        await OnSubmit.InvokeAsync();
+    }
 
     private void OpenBarcodeScanner()
     {
