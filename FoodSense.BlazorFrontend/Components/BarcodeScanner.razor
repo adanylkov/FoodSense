@@ -1,0 +1,40 @@
+@using BlazorBarcodeScanner.ZXing.JS
+
+@if (IsOpen)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex flex-column" style="z-index: 2000;">
+        <div class="d-flex align-items-center justify-content-between p-3 text-white">
+            <div>
+                <h2 class="h5 mb-0">@Title</h2>
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <p class="small mb-0 text-white-50">@Subtitle</p>
+                }
+            </div>
+            <button type="button" class="btn btn-light" @onclick="OnClose">
+                Close
+            </button>
+        </div>
+        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-3 overflow-auto">
+            <div class="barcode-scanner-host w-100">
+                <BarcodeReader StartCameraAutomatically="true"
+                               ShowStop="false"
+                               ShowStart="false"
+                               ShowReset="false"
+                               ShowToggleTorch="false"
+                               ShowVideoDeviceList="false"
+                               VideoWidth="640"
+                               VideoHeight="480"
+                               OnBarcodeReceived="OnBarcodeDetected" />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "Scan barcode";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<BarcodeReceivedEventArgs> OnBarcodeDetected { get; set; }
+}

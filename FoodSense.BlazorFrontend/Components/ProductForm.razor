@@ -127,30 +127,9 @@
     </div>
 </aside>
 
-@if (isBarcodeScannerOpen)
-{
-    <div class="position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex flex-column" style="z-index: 2000;">
-        <div class="d-flex align-items-center justify-content-between p-3 text-white">
-            <h2 class="h5 mb-0">Scan barcode</h2>
-            <button type="button" class="btn btn-light" @onclick="CloseBarcodeScanner">
-                Close
-            </button>
-        </div>
-        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-3 overflow-auto">
-            <div class="barcode-scanner-host w-100">
-                <BarcodeReader StartCameraAutomatically="true"
-                               ShowStop="false"
-                               ShowStart="false"
-                               ShowReset="false"
-                               ShowToggleTorch="false"
-                               ShowVideoDeviceList="false"
-                               VideoWidth="640"
-                               VideoHeight="480"
-                               OnBarcodeReceived="HandleBarcodeReceivedAsync" />
-            </div>
-        </div>
-    </div>
-}
+<BarcodeScanner IsOpen="isBarcodeScannerOpen"
+                OnClose="CloseBarcodeScanner"
+                OnBarcodeDetected="HandleBarcodeReceivedAsync" />
 
 @code {
     private const string PlaceholderImagePath = "/images/product-placeholder.svg";
