@@ -102,15 +102,16 @@ public class JPKJsonReceiptReaderTest
     }
 
     [Fact]
-    public void Deserialize_ShouldMapProductModel()
+    public async Task Deserialize_ShouldMapProductModel()
     {
-      var receiptReader = new JPKJsonReceiptReader(SampleJson);
-      var products = receiptReader.Products;
+      var receiptReader = new JPKJsonReceiptReader();
+      var products = (await receiptReader.ReadAsync(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(SampleJson)))).ToList();
+      
       products.First().Should().NotBeNull();
 
       products.Should().NotBeNull();
       products.Should().HaveCount(3);
-      products[0].ProductName.Should().Contain("NektarBanRiviva1l");
+      products[0].Name.Should().Contain("NektarBanRiviva1l");
     }
 
 }
