@@ -1,12 +1,8 @@
-@using System.Diagnostics
-@using FoodSense.API.Services
-@using FoodSense.Common.Models
-@using FoodSense.ReceiptReader
-@using FoodSense.Services
 @using BlazorBarcodeScanner.ZXing.JS
-@inject IReceiptReaderFactory ReceiptReaderFactory
-@inject IProductApiService ProductApiService
-@inject IMatchApiService MatchApiService
+@using FoodSense.BlazorFrontend.Core
+@using FoodSense.BlazorFrontend.Services
+@using FoodSense.Common.Models
+@inject ReceiptUploaderViewModel VM
 
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-body p-4">
@@ -92,7 +88,7 @@
                                     }
                                     <td>
                                         @if (!item.IsMatched && item.HasCandidate) {
-                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AddProductMappingAsync(item)">Confirm Match</button>
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => RunWithErrorHandling(() => VM.AddProductMappingAsync(item))">Confirm Match</button>
                                             <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="() => { item.BarcodeCandidate = null; item.ProductName = null; }">Unmatch</button>
                                         }
                                         else if (item.IsMatched) {
@@ -114,7 +110,7 @@
                 </div>
 
                 <div class="p-3 border-top bg-white">
-                    <button class="btn btn-primary rounded-3 fw-semibold" type="button" @onclick="ConfirmReceiptItemsAsync" disabled="@isAddingReceiptItems">
+                    <button class="btn btn-primary rounded-3 fw-semibold" type="button" @onclick="HandleSubmitAsync" disabled="@isAddingReceiptItems">
                         @if (isAddingReceiptItems)
                         {
                             <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
@@ -156,21 +152,36 @@
     private bool isBarcodeScannerOpen;
     private ReceiptPreviewItem? barcodeScannerItem;
 
-    private ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts;
-
-    private sealed class ReceiptPreviewItem
-    {
-        public required ReceiptItem Item { get; init; }
-        public bool IsSelected { get; set; } = true;
-        public bool IsMatched { get; set; } = false;
-        public string Name => HasCandidate ? ProductName! : Item.Name;
-        public bool HasCandidate => !string.IsNullOrWhiteSpace(BarcodeCandidate) && !string.IsNullOrWhiteSpace(ProductName);
-        public string? BarcodeCandidate { get; set; }
-        public int? ProductIdCandidate { get; set; }
-        public string? ProductName { get; set; }
-    }
 
     private bool AllReceiptItemsSelected => receiptPreviewItems.Count > 0 && receiptPreviewItems.All(item => item.IsSelected);
+
+    private async Task HandleSubmitAsync()
+    {
+        isAddingReceiptItems = true;
+        error = null;
+
+        try
+        {
+            var result = await VM.ConfirmReceiptItemsAsync(receiptPreviewItems);
+            if (result.IsSuccess)
+            {
+                receiptPreviewItems.Clear();
+                await OnReceiptItemsAdded.InvokeAsync();
+            }
+            else
+            {
+                error = result.ErrorMessage;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isAddingReceiptItems = false;
+        }
+    }
 
     private async Task HandleReceiptFileSelected(InputFileChangeEventArgs args)
     {
@@ -190,15 +201,12 @@
         try
         {
             using var stream = file.OpenReadStream(10 * 1024 * 1024);
-            var reader = ReceiptReaderFactory.GetReader(Path.GetExtension(file.Name));
-            var items = await reader.ReadAsync(stream);
-            receiptPreviewItems = items
-                .Select(item => new ReceiptPreviewItem { Item = item, IsSelected = true })
-                .ToList();
+
+            receiptPreviewItems = await VM.ReadReceiptItems(stream, file.Name);
 
             if (receiptPreviewItems.Count > 0)
             {
-                await MatchProductsAsync();
+                await RunWithErrorHandling(() => VM.MatchProductsAsync(receiptPreviewItems));
             }
 
             if (receiptPreviewItems.Count == 0)
@@ -216,43 +224,6 @@
             isLoadingReceipt = false;
         }
     }
-
-    private async Task MatchProductsAsync()
-    {
-        matchedProducts = null;
-        try
-        {
-            var names = receiptPreviewItems
-                .Where(i => i.IsSelected)
-                .Select(i => i.Item.Name)
-                .ToList();
-
-            if (names.Count > 0)
-            {
-                matchedProducts = await MatchApiService.MatchProductsAsync(names);
-                if (matchedProducts is not null)
-                {
-                    foreach (var (i, item) in matchedProducts.Data?.Index() ?? [])
-                    {
-                        if (receiptPreviewItems is null) continue;
-                        if (receiptPreviewItems.Count <= i) break;
-                        if (string.IsNullOrWhiteSpace(item.Barcode)) continue;
-
-                        var receiptPreviewItem = receiptPreviewItems[i];
-
-                        receiptPreviewItem.IsMatched = true;
-                        receiptPreviewItem.BarcodeCandidate = item.Barcode;
-                        receiptPreviewItem.ProductName = item.ProductName;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            error = $"Error matching products: {ex.Message}";
-        }
-    }
-
     private void ToggleReceiptItemSelection(ReceiptPreviewItem item, bool isSelected)
     {
         if (item.HasCandidate)
@@ -275,74 +246,23 @@
         receiptPreviewItems.Remove(item);
     }
 
-    private async Task ConfirmReceiptItemsAsync()
+
+    private async Task RunWithErrorHandling(Func<Task<Result>> action)
     {
-        if (receiptPreviewItems.Count == 0) return;
-
-        var itemsToAdd = receiptPreviewItems
-            .Where(i => i is { IsSelected: true, IsMatched: true });
-
-        foreach (var receiptItem in itemsToAdd)
-        {
-            Debug.Assert(receiptItem.HasCandidate, "Receipt item must have a candidate before adding to pantry.");
-            Debug.Assert(!string.IsNullOrWhiteSpace(receiptItem.BarcodeCandidate), "Receipt item must have a barcode before adding to pantry.");
-
-            try
-            {
-                var product = await ProductApiService.GetProductByBarcodeAsync(receiptItem.BarcodeCandidate!);
-                if (product is not null)
-                {
-
-                    await ProductApiService.CreatePantryItemAsync(product.Id, new PantryItemDto {
-                        ProductId = product.Id,
-                        Quantity = receiptItem.Item.Quantity,
-                    });
-                }
-                else
-                {
-                    error = $"Product with barcode {receiptItem.BarcodeCandidate} not found.";
-                }
-            }
-            catch (Exception ex)
-            {
-                error = $"Error adding product to pantry: {ex.Message}";
-            }
-        }
-
-        receiptPreviewItems.Clear();
-
-        await OnReceiptItemsAdded.InvokeAsync();
-    }
-
-    private async Task AddProductMappingAsync(ReceiptPreviewItem item)
-    {
-        Debug.Assert(item.HasCandidate, "Item must be matched with a candidate before adding a product mapping.");
-        Debug.Assert(!string.IsNullOrWhiteSpace(item.BarcodeCandidate), "Item must have a barcode before adding a product mapping.");
-        Debug.Assert(!string.IsNullOrWhiteSpace(item.ProductName), "Item must have a product name before adding a product mapping.");
-        Debug.Assert(item.ProductIdCandidate.HasValue, "Item must have a product ID before adding a product mapping.");
-
-        var productMapping = new ProductMappingDto
-        {
-            Barcode = item.BarcodeCandidate,
-            ProductName = item.Item.Name,
-            ProductId = item.ProductIdCandidate.Value
-        };
-
         try
         {
-            if (await MatchApiService.AddProductMappingAsync(productMapping) is false)
+            var result = await action();
+            if (!result.IsSuccess)
             {
-                error = $"Failed to add product mapping for {item.Item.Name}.";
-            }
-            else {
-                item.IsMatched = true;
+                error = result.ErrorMessage;
             }
         }
         catch (Exception ex)
         {
-            error = $"Error adding product mapping: {ex.Message}";
+            error = $"An unexpected error occurred: {ex.Message}";
         }
     }
+
 
     private void OpenBarcodeScanner(ReceiptPreviewItem item)
     {
@@ -365,34 +285,15 @@
 
         var item = barcodeScannerItem;
         CloseBarcodeScanner();
-        await SetBarcodeAsync(args.BarcodeText, item);
+
+        await RunWithErrorHandling(() => VM.SetBarcodeAsync(args.BarcodeText, item));
     }
 
     private async Task OnBarcodeChanged(ChangeEventArgs e, ReceiptPreviewItem item)
     {
         var newBarcode = e.Value?.ToString();
-        await SetBarcodeAsync(newBarcode, item);
+        await RunWithErrorHandling(() => VM.SetBarcodeAsync(newBarcode, item));
     }
 
-    private async Task SetBarcodeAsync(string? barcode, ReceiptPreviewItem item)
-    {
-        if (!string.IsNullOrWhiteSpace(barcode))
-        {
-            item.BarcodeCandidate = barcode;
-            try {
-                var product = await ProductApiService.GetProductByBarcodeAsync(barcode);
-                if (product is not null) {
-
-                    item.BarcodeCandidate = barcode;
-                    item.ProductName = product.ProductName;
-                    item.ProductIdCandidate = product.Id;
-                }
-            }
-            catch (Exception ex)
-            {
-                error = $"Error fetching product by barcode: {ex.Message}";
-            }
-        }
-    }
 
 }
