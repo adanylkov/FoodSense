@@ -3,6 +3,7 @@
 @using FoodSense.Common.Models
 @using FoodSense.ReceiptReader
 @using FoodSense.Services
+@using BlazorBarcodeScanner.ZXing.JS
 @inject IReceiptReaderFactory ReceiptReaderFactory
 @inject IProductApiService ProductApiService
 @inject IMatchApiService MatchApiService
@@ -75,7 +76,18 @@
                                     else
                                     {
                                         <td>
-                                            <input type="number" class="form-control form-control-sm" placeholder="Enter barcode" @onchange="(e) => OnBarcodeChanged(e, item)"/>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" inputmode="numeric" class="form-control" placeholder="Enter barcode"
+                                                       value="@item.BarcodeCandidate"
+                                                       @onchange="(e) => OnBarcodeChanged(e, item)" />
+                                                <button type="button"
+                                                        class="btn btn-outline-secondary"
+                                                        title="Scan barcode with camera"
+                                                        aria-label="Scan barcode with camera"
+                                                        @onclick="() => OpenBarcodeScanner(item)">
+                                                    <span aria-hidden="true">&#128247;</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     }
                                     <td>
@@ -129,6 +141,34 @@
     </div>
 }
 
+@if (isBarcodeScannerOpen && barcodeScannerItem is not null)
+{
+    <div class="position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex flex-column" style="z-index: 2000;">
+        <div class="d-flex align-items-center justify-content-between p-3 text-white">
+            <div>
+                <h2 class="h5 mb-0">Scan barcode</h2>
+                <p class="small mb-0 text-white-50">@barcodeScannerItem.Name</p>
+            </div>
+            <button type="button" class="btn btn-light" @onclick="CloseBarcodeScanner">
+                Close
+            </button>
+        </div>
+        <div class="flex-grow-1 d-flex align-items-center justify-content-center p-3 overflow-auto">
+            <div class="barcode-scanner-host w-100">
+                <BarcodeReader StartCameraAutomatically="true"
+                               ShowStop="false"
+                               ShowStart="false"
+                               ShowReset="false"
+                               ShowToggleTorch="false"
+                               ShowVideoDeviceList="false"
+                               VideoWidth="640"
+                               VideoHeight="480"
+                               OnBarcodeReceived="HandleBarcodeReceivedAsync" />
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter] public EventCallback OnReceiptItemsAdded { get; set; }
 
@@ -136,6 +176,8 @@
     private bool isAddingReceiptItems;
     private string? error;
     private List<ReceiptPreviewItem> receiptPreviewItems = [];
+    private bool isBarcodeScannerOpen;
+    private ReceiptPreviewItem? barcodeScannerItem;
 
     private ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts;
 
@@ -325,17 +367,46 @@
         }
     }
 
+    private void OpenBarcodeScanner(ReceiptPreviewItem item)
+    {
+        barcodeScannerItem = item;
+        isBarcodeScannerOpen = true;
+    }
+
+    private void CloseBarcodeScanner()
+    {
+        isBarcodeScannerOpen = false;
+        barcodeScannerItem = null;
+    }
+
+    private async Task HandleBarcodeReceivedAsync(BarcodeReceivedEventArgs args)
+    {
+        if (barcodeScannerItem is null || string.IsNullOrWhiteSpace(args.BarcodeText))
+        {
+            return;
+        }
+
+        var item = barcodeScannerItem;
+        CloseBarcodeScanner();
+        await SetBarcodeAsync(args.BarcodeText, item);
+    }
+
     private async Task OnBarcodeChanged(ChangeEventArgs e, ReceiptPreviewItem item)
     {
         var newBarcode = e.Value?.ToString();
-        if (!string.IsNullOrWhiteSpace(newBarcode))
+        await SetBarcodeAsync(newBarcode, item);
+    }
+
+    private async Task SetBarcodeAsync(string? barcode, ReceiptPreviewItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(barcode))
         {
-            item.BarcodeCandidate = newBarcode;
+            item.BarcodeCandidate = barcode;
             try {
-                var product = await ProductApiService.GetProductByBarcodeAsync(newBarcode);
+                var product = await ProductApiService.GetProductByBarcodeAsync(barcode);
                 if (product is not null) {
 
-                    item.BarcodeCandidate = newBarcode;
+                    item.BarcodeCandidate = barcode;
                     item.ProductName = product.ProductName;
                     item.ProductIdCandidate = product.Id;
                 }
