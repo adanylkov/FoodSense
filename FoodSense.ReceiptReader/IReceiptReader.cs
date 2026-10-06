@@ -1,5 +1,3 @@
-using FoodSense.Common.Models;
-
 namespace FoodSense.ReceiptReader;
 
 public interface IReceiptReader

@@ -1,4 +1,4 @@
-namespace FoodSense.Common.Models;
+namespace FoodSense.ReceiptReader;
 
 public class ReceiptItem
 {
