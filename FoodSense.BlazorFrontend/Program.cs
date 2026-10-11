@@ -1,5 +1,6 @@
 using FoodSense.API.Services;
 using FoodSense.BlazorFrontend.Components;
+using FoodSense.BlazorFrontend.Services;
 using FoodSense.ReceiptReader;
 using FoodSense.Services;
 using FoodSense.ViewModels;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<IReceiptReaderFactory, ReceiptReaderFactory>();
 builder.Services.AddScoped<IProductApiService, ProductApiService>();
 builder.Services.AddScoped<IMatchApiService, MatchApiService>();
 builder.Services.AddScoped<ProductsViewModel>();
+builder.Services.AddScoped<ReceiptUploaderViewModel>();
 
 var app = builder.Build();
 
