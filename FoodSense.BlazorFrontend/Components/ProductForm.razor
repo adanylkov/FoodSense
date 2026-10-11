@@ -1,5 +1,6 @@
-@using FoodSense.Common.Models
+@using System.Diagnostics
 @using BlazorBarcodeScanner.ZXing.JS
+@using FoodSense.Common.Models
 
 <aside class="col-lg-4">
     <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
@@ -12,7 +13,7 @@
 
         <div class="card-body p-4">
             <div class="bg-body-tertiary rounded-3 p-3 text-center mb-3 border border-dashed">
-                <img src="@GetImageSource(FormModel.FrontImageUrl)" 
+                <img src="@(FormModel.FrontImageUrl ?? ProductDto.PlaceholderImagePath)" 
                      alt="Product Preview"
                      class="img-fluid rounded-3 object-fit-contain" 
                      style="max-height: 160px;" />
@@ -132,7 +133,6 @@
                 OnBarcodeDetected="HandleBarcodeReceivedAsync" />
 
 @code {
-    private const string PlaceholderImagePath = "/images/product-placeholder.svg";
     private bool isBarcodeScannerOpen;
 
     [Parameter, EditorRequired] public required ProductDto FormModel { get; set; }
@@ -155,6 +155,8 @@
         Nutrients.Proteins = Math.Round(Nutrients.Proteins, 2);
         Nutrients.Salt = Math.Round(Nutrients.Salt, 2);
 
+        Debug.Assert(FormModel.FrontImageUrl != null, "FormModel.FrontImageUrl should not be null before submission.");
+
         await OnSubmit.InvokeAsync();
     }
 
@@ -174,7 +176,4 @@
         isBarcodeScannerOpen = false;
         await OnBarcodeBlur.InvokeAsync(FormModel.Barcode);
     }
-
-    private string GetImageSource(string? imageUrl)
-        => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
 }

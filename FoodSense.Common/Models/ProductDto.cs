@@ -13,6 +13,7 @@ public sealed record NutrientsDto
 
 public sealed record ProductDto
 {
+    public static readonly string PlaceholderImagePath = "/images/product-placeholder.svg";
     public int Id { get; set; }
     public string Barcode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
@@ -26,23 +27,23 @@ public sealed record ProductDto
     {
         return new ProductDto
         {
-            Id = this.Id,
-            Barcode = this.Barcode,
-            ProductName = this.ProductName,
-            Brands = this.Brands,
-            ProductQuantity = this.ProductQuantity,
-            FrontImageUrl = this.FrontImageUrl,
+            Id = Id,
+            Barcode = Barcode,
+            ProductName = ProductName,
+            Brands = Brands,
+            ProductQuantity = ProductQuantity,
+            FrontImageUrl = FrontImageUrl ?? PlaceholderImagePath,
             Nutrients = new NutrientsDto
             {
-                EnergyKcal = this.Nutrients.EnergyKcal,
-                Fat = this.Nutrients.Fat,
-                SaturatedFat = this.Nutrients.SaturatedFat,
-                Carbohydrates = this.Nutrients.Carbohydrates,
-                Sugars = this.Nutrients.Sugars,
-                Proteins = this.Nutrients.Proteins,
-                Salt = this.Nutrients.Salt
+                EnergyKcal = Nutrients.EnergyKcal,
+                Fat = Nutrients.Fat,
+                SaturatedFat = Nutrients.SaturatedFat,
+                Carbohydrates = Nutrients.Carbohydrates,
+                Sugars = Nutrients.Sugars,
+                Proteins = Nutrients.Proteins,
+                Salt = Nutrients.Salt
             },
-            PantryItems = new List<PantryItemDto>(this.PantryItems)
+            PantryItems = new List<PantryItemDto>(PantryItems)
         };
     }
 }
