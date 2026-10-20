@@ -18,4 +18,5 @@ public interface IProductService
     Task<Product?> GetProductByMappingNameAsync(string name);
     Task<IEnumerable<Product?>> GetProductsByMappingNamesAsync(IEnumerable<string> names);
     Task AddProductMappingAsync(string mappingName, int productId);
+    Task<Product?> GetProductByNameAsync(string name);
 }

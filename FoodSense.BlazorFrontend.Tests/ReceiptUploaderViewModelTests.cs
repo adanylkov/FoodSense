@@ -57,7 +57,7 @@ public class ReceiptUploaderViewModelTests
             {
                 Data =
                 [
-                    new ProductMappingDto { Barcode = "123", ProductName = "Matched milk" }
+                    new ProductMappingDto { Barcode = "123", ProductName = "Matched milk", ProductId = 1 }
                 ]
             });
         var viewModel = CreateViewModel(matchApiService);
@@ -69,6 +69,32 @@ public class ReceiptUploaderViewModelTests
         firstItem.BarcodeCandidate.Should().Be("123");
         firstItem.ProductName.Should().Be("Matched milk");
         secondItem.Should().BeEquivalentTo(CreateItem("Bread"));
+    }
+
+    [Fact]
+    public async Task MatchProductsAsync_ShouldMatchProductWithoutBarcode()
+    {
+        var item = CreateItem("Milk");
+        var items = new List<ReceiptPreviewItem> { item };
+        var matchApiService = new Mock<IMatchApiService>();
+        matchApiService
+            .Setup(service => service.MatchProductsAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(new ApiResponse<IEnumerable<ProductMappingDto>>
+            {
+                Data =
+                [
+                    new ProductMappingDto { ProductId = 2, ProductName = "Milk without barcode" }
+                ]
+            });
+        var viewModel = CreateViewModel(matchApiService);
+
+        var result = await viewModel.MatchProductsAsync(items);
+
+        result.IsSuccess.Should().BeTrue();
+        item.IsMatched.Should().BeTrue();
+        item.ProductIdCandidate.Should().Be(2);
+        item.BarcodeCandidate.Should().BeNull();
+        item.HasCandidate.Should().BeTrue();
     }
 
     [Fact]

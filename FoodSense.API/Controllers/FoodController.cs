@@ -50,18 +50,26 @@ namespace FoodSense.API.Controllers
             return Ok(product.ToDto());
         }
 
+        [HttpGet("{name}")]
+        public async Task<IActionResult> GetProductByName(string name)
+        {
+            var product = await productService.GetProductByNameAsync(name);
+            if (product is null) return NotFound();
+            return Ok(product.ToDto());
+        }
+
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
         {
-            if (string.IsNullOrWhiteSpace(product.Barcode))
-            {
-                return BadRequest("Barcode is required.");
-            }
+            product.Barcode = NormalizeBarcode(product.Barcode);
 
-            var existing = await productService.GetProductByBarcodeOrFetchAsync(product.Barcode);
-            if (existing != null)
+            if (product.Barcode is not null)
             {
-                return Conflict("A product with this barcode already exists.");
+                var existing = await productService.GetProductByBarcodeOrFetchAsync(product.Barcode);
+                if (existing != null)
+                {
+                    return Conflict("A product with this barcode already exists.");
+                }
             }
 
             await productService.CreateProductAsync(product);
@@ -71,16 +79,16 @@ namespace FoodSense.API.Controllers
         [HttpPut("{id:int}")]
         public async Task<ActionResult<Product>> UpdateProduct(int id, [FromBody] Product product)
         {
-            if (string.IsNullOrWhiteSpace(product.Barcode))
-            {
-                return BadRequest("Barcode is required.");
-            }
+            product.Barcode = NormalizeBarcode(product.Barcode);
 
             var updatedProduct = await productService.UpdateProductAsync(id, product);
             if (updatedProduct == null) return NotFound();
 
             return Ok(updatedProduct);
         }
+
+        private static string? NormalizeBarcode(string? barcode)
+            => string.IsNullOrWhiteSpace(barcode) ? null : barcode.Trim();
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id)

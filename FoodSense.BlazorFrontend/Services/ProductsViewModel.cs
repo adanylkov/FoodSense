@@ -9,6 +9,7 @@ public class ProductsViewModel
 
     public List<ProductDto> Products { get; private set; } = [];
     public ProductDto FormModel { get; set; } = new();
+    public IReadOnlyList<CategoryDto> Categories { get; private set; } = [];
     
     public PaginationModel Pagination { get; } = new();
     public bool PantryOnly { get; private set; }
@@ -48,6 +49,7 @@ public class ProductsViewModel
                 {
                     ActivePantryProduct = Products.FirstOrDefault(p => p.Id == ActivePantryProduct.Id);
                 }
+
             }
         }
         catch (Exception ex)
@@ -57,6 +59,18 @@ public class ProductsViewModel
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    public async Task LoadCategoriesAsync()
+    {
+        try
+        {
+            Categories = await _productApi.GetCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
         }
     }
 

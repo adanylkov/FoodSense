@@ -84,6 +84,11 @@
                                                     <span aria-hidden="true">&#128247;</span>
                                                 </button>
                                             </div>
+                                            <input type="text"
+                                                   class="form-control form-control-sm mt-2"
+                                                   placeholder="Product name (no barcode)"
+                                                   value="@item.ProductNameCandidate"
+                                                   @onchange="(e) => OnProductNameChanged(e, item)" />
                                         </td>
                                     }
                                     <td>
@@ -293,6 +298,12 @@
     {
         var newBarcode = e.Value?.ToString();
         await RunWithErrorHandling(() => VM.SetBarcodeAsync(newBarcode, item));
+    }
+
+    private async Task OnProductNameChanged(ChangeEventArgs e, ReceiptPreviewItem item)
+    {
+        var productName = e.Value?.ToString();
+        await RunWithErrorHandling(() => VM.SetProductNameAsync(productName, item));
     }
 
 

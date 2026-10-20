@@ -12,6 +12,7 @@ public static class ProductDtoExtensions
             Id = product.Id,
             Barcode = product.Barcode,
             ProductName = product.ProductName,
+            CategoryId = product.CategoryId,
             FrontImageUrl = product.FrontImageUrl,
             Nutrients = new NutrientsDto
             {

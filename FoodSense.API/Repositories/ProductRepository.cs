@@ -13,6 +13,7 @@ public interface IProductRepository
     Task AddAsync(Product product);
     Task UpdateAsync(Product product);
     Task DeleteAsync(int id);
+    Task<Product?> GetByNameAsync(string name, bool includePantryItems = false);
 }
 
 public class ProductRepository(FoodSenseDbContext context) : IProductRepository
@@ -82,5 +83,24 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
             await context.SaveChangesAsync();
         }
     }
-}
 
+    public Task<Product?> GetByNameAsync(string name, bool includePantryItems = false)
+    {
+        var escapedName = name
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+        var pattern = $"{escapedName}%";
+        var query = context.Products.AsNoTracking();
+
+        if (includePantryItems)
+        {
+            query = query.Include(p => p.PantryItems);
+        }
+
+        return query
+            .Where(p => EF.Functions.Like(p.ProductName, pattern, "\\"))
+            .OrderBy(p => p.Id)
+            .FirstOrDefaultAsync();
+    }
+}
