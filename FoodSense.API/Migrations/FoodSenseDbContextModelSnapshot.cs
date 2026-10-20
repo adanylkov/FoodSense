@@ -22,6 +22,74 @@ namespace FoodSense.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FoodSense.API.Data.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Fruits"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Vegetables"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Grains"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Dairy"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Meat and Seafood"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Snacks"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Beverages"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Other"
+                        });
+                });
+
             modelBuilder.Entity("FoodSense.API.Data.Models.PantryItem", b =>
                 {
                     b.Property<int>("Id")
@@ -65,6 +133,9 @@ namespace FoodSense.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("FrontImageUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -77,6 +148,8 @@ namespace FoodSense.API.Migrations
 
                     b.HasIndex("Barcode")
                         .IsUnique();
+
+                    b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
                 });
@@ -106,6 +179,16 @@ namespace FoodSense.API.Migrations
                     b.ToTable("ProductMappings");
                 });
 
+            modelBuilder.Entity("FoodSense.API.Data.Models.Category", b =>
+                {
+                    b.HasOne("FoodSense.API.Data.Models.Category", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("FoodSense.API.Data.Models.PantryItem", b =>
                 {
                     b.HasOne("FoodSense.API.Data.Models.Product", "Product")
@@ -119,6 +202,11 @@ namespace FoodSense.API.Migrations
 
             modelBuilder.Entity("FoodSense.API.Data.Models.Product", b =>
                 {
+                    b.HasOne("FoodSense.API.Data.Models.Category", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.OwnsOne("FoodSense.API.Data.Models.Nutrients", "Nutrients", b1 =>
                         {
                             b1.Property<int>("ProductId")
@@ -153,6 +241,8 @@ namespace FoodSense.API.Migrations
                                 .HasForeignKey("ProductId");
                         });
 
+                    b.Navigation("Category");
+
                     b.Navigation("Nutrients")
                         .IsRequired();
                 });
@@ -166,6 +256,13 @@ namespace FoodSense.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("FoodSense.API.Data.Models.Category", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.Product", b =>

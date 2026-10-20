@@ -8,6 +8,7 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Product> Products { get; set; }
     public DbSet<PantryItem> PantryItems { get; set; }
     public DbSet<ProductMapping> ProductMappings { get; set; }
+    public DbSet<Category> Categories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,6 +19,63 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
             entity.HasKey(p => p.Id);
             entity.HasIndex(p => p.Barcode).IsUnique();
             entity.OwnsOne(p => p.Nutrients);
+            entity.HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            entity.HasOne(c => c.Parent)
+                .WithMany(c => c.Children)
+                .HasForeignKey(c => c.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(c => c.Name).IsUnique();
+
+            entity.HasData(
+                new Category
+                {
+                    Id = 1,
+                    Name = "Fruits"
+                },
+                new Category
+                {
+                    Id = 2,
+                    Name = "Vegetables"
+                },
+                new Category
+                {
+                    Id = 3,
+                    Name = "Grains"
+                },
+                new Category
+                {
+                    Id = 4,
+                    Name = "Dairy"
+                },
+                new Category
+                {
+                    Id = 5,
+                    Name = "Meat and Seafood"
+                },
+                new Category
+                {
+                    Id = 6,
+                    Name = "Snacks"
+                },
+                new Category
+                {
+                    Id = 7,
+                    Name = "Beverages"
+                },
+                new Category
+                {
+                    Id = 8,
+                    Name = "Other"
+                });
         });
 
         modelBuilder.Entity<PantryItem>(entity =>
@@ -47,4 +105,6 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
+
+    
 }
