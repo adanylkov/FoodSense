@@ -34,7 +34,7 @@ public sealed record ProductDto
             CategoryId = CategoryId,
             Brands = Brands,
             ProductQuantity = ProductQuantity,
-            FrontImageUrl = FrontImageUrl ?? PlaceholderImagePath,
+            FrontImageUrl = FrontImageUrl,
             Nutrients = new NutrientsDto
             {
                 EnergyKcal = Nutrients.EnergyKcal,

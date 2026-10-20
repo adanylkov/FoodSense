@@ -44,6 +44,16 @@
                 </div>
 
                 <div class="mb-3">
+                    <label for="imageUrlInput" class="form-label small fw-semibold">Image URL</label>
+                    <InputText id="imageUrlInput"
+                               type="url"
+                               class="form-control rounded-3"
+                               placeholder="https://example.com/product.jpg"
+                               @bind-Value="FormModel.FrontImageUrl" />
+                    <div class="form-text">Optional. Leave empty to use the placeholder image.</div>
+                </div>
+
+                <div class="mb-3">
                     <label for="categoryInput" class="form-label small fw-semibold">Category</label>
                     <InputSelect id="categoryInput" class="form-select rounded-3" @bind-Value="FormModel.CategoryId">
                         <option value="">No category</option>
