@@ -43,6 +43,17 @@
                     <InputText id="productNameInput" class="form-control rounded-3" placeholder="Item title" @bind-Value="FormModel.ProductName" />
                 </div>
 
+                <div class="mb-3">
+                    <label for="categoryInput" class="form-label small fw-semibold">Category</label>
+                    <InputSelect id="categoryInput" class="form-select rounded-3" @bind-Value="FormModel.CategoryId">
+                        <option value="">No category</option>
+                        @foreach (var category in FlattenCategories(Categories))
+                        {
+                            <option value="@category.Id">@category.Label</option>
+                        }
+                    </InputSelect>
+                </div>
+
                 <div class="row g-2 mb-3">
                     <div class="col-6">
                         <label for="brandsInput" class="form-label small fw-semibold">Brands</label>
@@ -136,6 +147,7 @@
     private bool isBarcodeScannerOpen;
 
     [Parameter, EditorRequired] public required ProductDto FormModel { get; set; }
+    [Parameter] public IReadOnlyList<CategoryDto> Categories { get; set; } = [];
     [Parameter] public int? EditingProductId { get; set; }
     [Parameter] public bool IsSaving { get; set; }
 
@@ -144,6 +156,21 @@
     [Parameter] public EventCallback<string?> OnBarcodeBlur { get; set; }
 
     private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
+
+    private static IEnumerable<(int Id, string Label)> FlattenCategories(
+        IEnumerable<CategoryDto> categories,
+        string prefix = "")
+    {
+        foreach (var category in categories)
+        {
+            yield return (category.Id, $"{prefix}{category.Name}");
+
+            foreach (var child in FlattenCategories(category?.Children ?? [], $"{prefix}{category?.Name} / "))
+            {
+                yield return child;
+            }
+        }
+    }
 
     private async Task HandleSubmit()
     {

@@ -17,6 +17,7 @@ public sealed record ProductDto
     public int Id { get; set; }
     public string? Barcode { get; set; }
     public string ProductName { get; set; } = string.Empty;
+    public int? CategoryId { get; set; }
     public string Brands { get; set; } = string.Empty;
     public string ProductQuantity { get; set; } = string.Empty;
     public string? FrontImageUrl { get; set; }
@@ -30,6 +31,7 @@ public sealed record ProductDto
             Id = Id,
             Barcode = Barcode,
             ProductName = ProductName,
+            CategoryId = CategoryId,
             Brands = Brands,
             ProductQuantity = ProductQuantity,
             FrontImageUrl = FrontImageUrl ?? PlaceholderImagePath,

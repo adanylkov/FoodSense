@@ -14,6 +14,7 @@ public interface IProductApiService
     Task<HttpResponseMessage> QuickAddPantryItemAsync(int productId);
     Task<HttpResponseMessage> UpdatePantryItemAsync(int pantryItemId, PantryItemDto pantryItem);
     Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product);
+    Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync();
 }
 
 public class ProductApiService : IProductApiService
@@ -44,6 +45,12 @@ public class ProductApiService : IProductApiService
     public async Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product)
     {
         return await _http.PutAsJsonAsync($"api/Food/UpdateProduct/{id}", product);
+    }
+
+    public async Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync()
+    {
+        return await _http.GetFromJsonAsync<List<CategoryDto>>("api/Category/GetCategories")
+            ?? [];
     }
 
     public async Task<HttpResponseMessage> DeleteProductAsync(int id)

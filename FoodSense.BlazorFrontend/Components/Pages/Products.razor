@@ -44,6 +44,7 @@
 
     <div class="row g-4">
         <ProductForm FormModel="VM.FormModel"
+                     Categories="VM.Categories"
                      EditingProductId="VM.EditingProductId"
                      IsSaving="VM.IsSaving"
                      OnSubmit="VM.SaveProductAsync"
@@ -113,6 +114,8 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await VM.LoadProductsAsync(VM.Pagination.CurrentPage);
+        await Task.WhenAll(
+            VM.LoadCategoriesAsync(),
+            VM.LoadProductsAsync(VM.Pagination.CurrentPage));
     }
 }
