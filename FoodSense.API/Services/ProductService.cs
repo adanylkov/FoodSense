@@ -79,4 +79,9 @@ public class ProductService(
         await productMappingRepository.AddAsync(mapping);
         await productMappingRepository.SaveChangesAsync();
     }
+
+    public Task<Product?> GetProductByNameAsync(string name)
+    {
+        return productRepository.GetByNameAsync(name);
+    }
 }

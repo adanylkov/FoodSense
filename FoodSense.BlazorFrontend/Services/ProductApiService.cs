@@ -10,11 +10,13 @@ public interface IProductApiService
     Task<HttpResponseMessage> DeletePantryItemAsync(int pantryItemId);
     Task<HttpResponseMessage> DeleteProductAsync(int id);
     Task<ProductDto?> GetProductByBarcodeAsync(string barcode);
+    Task<ProductDto?> GetProductByIdAsync(int id);
     Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false);
     Task<HttpResponseMessage> QuickAddPantryItemAsync(int productId);
     Task<HttpResponseMessage> UpdatePantryItemAsync(int pantryItemId, PantryItemDto pantryItem);
     Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product);
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync();
+    Task<ProductDto?> GetProductByNameAsync(string productName);
 }
 
 public class ProductApiService : IProductApiService
@@ -35,6 +37,11 @@ public class ProductApiService : IProductApiService
     public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode)
     {
         return await _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProduct/{Uri.EscapeDataString(barcode)}");
+    }
+
+    public async Task<ProductDto?> GetProductByIdAsync(int id)
+    {
+        return await _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProductById/{id}");
     }
 
     public async Task<HttpResponseMessage> CreateProductAsync(ProductDto product)
@@ -76,5 +83,10 @@ public class ProductApiService : IProductApiService
     public async Task<HttpResponseMessage> DeletePantryItemAsync(int pantryItemId)
     {
         return await _http.DeleteAsync($"api/Pantry/DeletePantryItem/{pantryItemId}");
+    }
+
+    public Task<ProductDto?> GetProductByNameAsync(string productName)
+    {
+        return _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProductByName/{Uri.EscapeDataString(productName)}");
     }
 }

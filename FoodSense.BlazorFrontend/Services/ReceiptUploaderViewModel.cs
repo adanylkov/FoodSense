@@ -48,12 +48,13 @@ public class ReceiptUploaderViewModel
                     foreach (var (i, item) in matchedProducts.Data?.Index() ?? [])
                     {
                         if (receiptPreviewItems.Count <= i) break;
-                        if (string.IsNullOrWhiteSpace(item.Barcode)) continue;
+                        if (item.ProductId <= 0) continue;
 
                         var receiptPreviewItem = receiptPreviewItems[i];
 
                         receiptPreviewItem.IsMatched = true;
-                        receiptPreviewItem.BarcodeCandidate = item.Barcode;
+                        receiptPreviewItem.BarcodeCandidate = string.IsNullOrWhiteSpace(item.Barcode) ? null : item.Barcode;
+                        receiptPreviewItem.ProductIdCandidate = item.ProductId;
                         receiptPreviewItem.ProductName = item.ProductName;
                     }
 
@@ -72,7 +73,6 @@ public class ReceiptUploaderViewModel
     internal async Task<Result> AddProductMappingAsync(ReceiptPreviewItem item)
     {
         Debug.Assert(item.HasCandidate, "Item must be matched with a candidate before adding a product mapping.");
-        Debug.Assert(!string.IsNullOrWhiteSpace(item.BarcodeCandidate), "Item must have a barcode before adding a product mapping.");
         Debug.Assert(!string.IsNullOrWhiteSpace(item.ProductName), "Item must have a product name before adding a product mapping.");
         Debug.Assert(item.ProductIdCandidate.HasValue, "Item must have a product ID before adding a product mapping.");
 
@@ -111,11 +111,13 @@ public class ReceiptUploaderViewModel
         foreach (var receiptItem in itemsToAdd)
         {
             Debug.Assert(receiptItem.HasCandidate, "Receipt item must have a candidate before adding to pantry.");
-            Debug.Assert(!string.IsNullOrWhiteSpace(receiptItem.BarcodeCandidate), "Receipt item must have a barcode before adding to pantry.");
+            Debug.Assert(receiptItem.ProductIdCandidate.HasValue, "Receipt item must have a product ID before adding to pantry.");
 
             try
             {
-                var product = await _productApiService.GetProductByBarcodeAsync(receiptItem.BarcodeCandidate!);
+                var product = receiptItem.ProductIdCandidate.HasValue
+                    ? await _productApiService.GetProductByIdAsync(receiptItem.ProductIdCandidate.Value)
+                    : null;
                 if (product is not null)
                 {
 
@@ -142,6 +144,10 @@ public class ReceiptUploaderViewModel
 
     internal async Task<Result> SetBarcodeAsync(string? barcode, ReceiptPreviewItem item)
     {
+        item.ProductIdCandidate = null;
+        item.ProductName = null;
+        item.IsMatched = false;
+
         if (!string.IsNullOrWhiteSpace(barcode))
         {
             item.BarcodeCandidate = barcode;
@@ -163,5 +169,35 @@ public class ReceiptUploaderViewModel
         }
 
         return Result.Failure("Barcode is null or empty.");
+    }
+
+    internal async Task<Result> SetProductNameAsync(string? productName, ReceiptPreviewItem item)
+    {
+        if (string.IsNullOrWhiteSpace(productName))
+        {
+            return Result.Failure("Product name is null or empty.");
+        }
+
+        item.ProductNameCandidate = productName;
+        item.ProductIdCandidate = null;
+        item.BarcodeCandidate = null;
+        item.IsMatched = false;
+
+        try
+        {
+            var product = await _productApiService.GetProductByNameAsync(productName);
+            if (product is null)
+            {
+                return Result.Failure($"Product with name {productName} not found.");
+            }
+
+            item.ProductName = product.ProductName;
+            item.ProductIdCandidate = product.Id;
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure($"Error fetching product by name: {ex.Message}");
+        }
     }
 }
