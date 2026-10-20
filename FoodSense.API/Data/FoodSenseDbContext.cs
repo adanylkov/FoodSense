@@ -17,7 +17,9 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<Product>(entity =>
         {
             entity.HasKey(p => p.Id);
-            entity.HasIndex(p => p.Barcode).IsUnique();
+            entity.HasIndex(p => p.Barcode)
+                .IsUnique()
+                .HasFilter("[Barcode] IS NOT NULL");
             entity.OwnsOne(p => p.Nutrients);
             entity.HasOne(p => p.Category)
                 .WithMany(c => c.Products)
