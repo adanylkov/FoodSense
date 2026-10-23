@@ -3,9 +3,10 @@ namespace FoodSense.ViewModels;
 using FoodSense.Common.Models;
 using FoodSense.Services;
 
-public class ProductsViewModel
+public class ProductsViewModel : ViewModelBase
 {
     private readonly IProductApiService _productApi;
+    private readonly PantryViewModel _pantry;
 
     public List<ProductDto> Products { get; private set; } = [];
     public ProductDto FormModel { get; set; } = new();
@@ -16,63 +17,37 @@ public class ProductsViewModel
 
     public int? EditingProductId { get; private set; }
     public int? ProductToDeleteId { get; private set; }
-    public ProductDto? ActivePantryProduct { get; private set; }
-    public int? EditingPantryItemId { get; private set; }
-    public decimal PantryFormQuantity { get; set; } = 1;
 
     public bool IsLoading { get; private set; }
     public bool IsSaving { get; private set; }
-    public bool IsSavingPantry { get; private set; }
     
-    public string? SuccessMessage { get; private set; }
-    public string? ErrorMessage { get; private set; }
+    public string? SuccessMessage => Alerts.Success;
+    public string? ErrorMessage => Alerts.Error;
 
-    public ProductsViewModel(IProductApiService productApi)
+    public ProductsViewModel(IProductApiService productApi, PantryViewModel pantry, AlertService alerts) : base(alerts)
     {
         _productApi = productApi;
+        _pantry = pantry;
+        _pantry.PantryChanged += () => LoadProductsAsync(Pagination.CurrentPage);
     }
 
     public async Task LoadProductsAsync(int page)
     {
-        IsLoading = true;
         ClearAlerts();
 
-        try
+        await RunAsync(async () =>
         {
             var response = await _productApi.GetProductsAsync(page, Pagination.PageSize, PantryOnly);
-            if (response != null)
-            {
-                Products = response.Data?.ToList() ?? [];
-                Pagination.Update(page, response.TotalCount);
+            if (response == null) return;
 
-                if (ActivePantryProduct != null)
-                {
-                    ActivePantryProduct = Products.FirstOrDefault(p => p.Id == ActivePantryProduct.Id);
-                }
-
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+            Products = response.Data?.ToList() ?? [];
+            Pagination.Update(page, response.TotalCount);
+            _pantry.RefreshActiveProduct(Products);
+        }, busy => IsLoading = busy);
     }
 
-    public async Task LoadCategoriesAsync()
-    {
-        try
-        {
-            Categories = await _productApi.GetCategoriesAsync();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-    }
+    public Task LoadCategoriesAsync() =>
+        RunAsync(async () => Categories = await _productApi.GetCategoriesAsync());
 
     public async Task SetPantryOnlyAsync(bool pantryOnly)
     {
@@ -84,10 +59,9 @@ public class ProductsViewModel
 
     public async Task SaveProductAsync()
     {
-        IsSaving = true;
         ClearAlerts();
 
-        try
+        await RunAsync(async () =>
         {
             if (EditingProductId is null)
             {
@@ -95,10 +69,10 @@ public class ProductsViewModel
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorMsg = await response.Content.ReadAsStringAsync();
-                    ErrorMessage = $"Failed to create product: {errorMsg}";
+                    Alerts.Error = $"Failed to create product: {errorMsg}";
                     return;
                 }
-                SuccessMessage = "Product created successfully.";
+                Alerts.Success = "Product created successfully.";
             }
             else
             {
@@ -107,62 +81,41 @@ public class ProductsViewModel
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorMsg = await response.Content.ReadAsStringAsync();
-                    ErrorMessage = $"Failed to update product: {errorMsg}";
+                    Alerts.Error = $"Failed to update product: {errorMsg}";
                     return;
                 }
-                SuccessMessage = "Product updated successfully.";
+                Alerts.Success = "Product updated successfully.";
             }
 
             ResetForm();
             await LoadProductsAsync(Pagination.CurrentPage);
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            IsSaving = false;
-        }
+        }, busy => IsSaving = busy);
     }
 
     public async Task HandleBarcodeInputAsync(string? barcode)
     {
         if (string.IsNullOrWhiteSpace(barcode)) return;
 
-        try
+        await RunAsync(async () =>
         {
             var product = await _productApi.GetProductByBarcodeAsync(barcode);
             if (product != null) StartEditing(product);
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
+        });
     }
 
     public async Task ExecuteDeleteAsync()
     {
         if (!ProductToDeleteId.HasValue) return;
 
-        IsSaving = true;
         ClearAlerts();
 
-        try
+        await RunAsync(async () =>
         {
             await _productApi.DeleteProductAsync(ProductToDeleteId.Value);
-            SuccessMessage = "Product deleted successfully.";
+            Alerts.Success = "Product deleted successfully.";
             ProductToDeleteId = null;
             await LoadProductsAsync(Pagination.CurrentPage);
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            IsSaving = false;
-        }
+        }, busy => IsSaving = busy);
     }
 
     public void StartEditing(ProductDto product)
@@ -176,116 +129,24 @@ public class ProductsViewModel
     {
         EditingProductId = null;
         FormModel = new ProductDto { Nutrients = new NutrientsDto() };
+        NotifyStateChanged();
     }
 
-    public void PromptDelete(int id) => ProductToDeleteId = id;
-    public void CancelDelete() => ProductToDeleteId = null;
-    public void ClearAlerts() { SuccessMessage = null; ErrorMessage = null; }
-
-    // --- Pantry Management Handlers ---
-
-    public async Task QuickAddPantryItemAsync(int productId)
+    public void PromptDelete(int id)
     {
-        try
-        {
-            var response = await _productApi.QuickAddPantryItemAsync(productId);
-            if (response.IsSuccessStatusCode)
-            {
-                SuccessMessage = "Pantry item added.";
-                await LoadProductsAsync(Pagination.CurrentPage);
-            }
-            else
-            {
-                ErrorMessage = "Failed to add item to pantry.";
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
+        ProductToDeleteId = id;
+        NotifyStateChanged();
     }
 
-    public async Task SavePantryItemAsync()
+    public void CancelDelete()
     {
-        if (ActivePantryProduct == null || PantryFormQuantity <= 0) return;
-
-        IsSavingPantry = true;
-        ErrorMessage = null;
-
-        try
-        {
-            var payload = new PantryItemDto
-            {
-                Id = EditingPantryItemId ?? 0,
-                Quantity = PantryFormQuantity,
-                AddedAt = DateTime.UtcNow
-            };
-
-            var response = EditingPantryItemId.HasValue
-                ? await _productApi.UpdatePantryItemAsync(EditingPantryItemId.Value, payload)
-                : await _productApi.CreatePantryItemAsync(ActivePantryProduct.Id, payload);
-
-            if (response.IsSuccessStatusCode)
-            {
-                ResetPantryForm();
-                await LoadProductsAsync(Pagination.CurrentPage);
-            }
-            else
-            {
-                ErrorMessage = "Failed to save pantry item.";
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            IsSavingPantry = false;
-        }
+        ProductToDeleteId = null;
+        NotifyStateChanged();
     }
 
-    public async Task DeletePantryItemAsync(int pantryItemId)
+    public void ClearAlerts()
     {
-        try
-        {
-            var response = await _productApi.DeletePantryItemAsync(pantryItemId);
-            if (response.IsSuccessStatusCode)
-            {
-                await LoadProductsAsync(Pagination.CurrentPage);
-            }
-            else
-            {
-                ErrorMessage = "Failed to delete pantry item.";
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-    }
-
-    public void OpenPantryModal(ProductDto product)
-    {
-        ActivePantryProduct = product;
-        ResetPantryForm();
-    }
-
-    public void ClosePantryModal()
-    {
-        ActivePantryProduct = null;
-        ResetPantryForm();
-    }
-
-    public void StartEditingPantryItem(PantryItemDto item)
-    {
-        EditingPantryItemId = item.Id;
-        PantryFormQuantity = item.Quantity;
-    }
-
-    public void ResetPantryForm()
-    {
-        EditingPantryItemId = null;
-        PantryFormQuantity = 1;
+        Alerts.Clear();
+        NotifyStateChanged();
     }
 }

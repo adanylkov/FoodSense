@@ -2,7 +2,9 @@
 @rendermode InteractiveServer
 @using FoodSense.Common.Models
 @using FoodSense.ViewModels
+@implements IDisposable
 @inject ProductsViewModel VM
+@inject PantryViewModel Pantry
 
 <PageTitle>FoodSense - Product Catalog</PageTitle>
 
@@ -22,25 +24,8 @@
 
 <div>
     <!-- Status Alerts -->
-    @if (!string.IsNullOrWhiteSpace(VM.SuccessMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <strong>Success!</strong> @VM.SuccessMessage
-            </div>
-            <button type="button" class="btn-close" @onclick="VM.ClearAlerts" aria-label="Close"></button>
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(VM.ErrorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-4" role="alert">
-            <div class="d-flex align-items-center gap-2">
-                <strong>Error:</strong> @VM.ErrorMessage
-            </div>
-            <button type="button" class="btn-close" @onclick="VM.ClearAlerts" aria-label="Close"></button>
-        </div>
-    }
+    <AlertBanner Variant="success" Title="Success!" Message="@VM.SuccessMessage" OnDismiss="VM.ClearAlerts" />
+    <AlertBanner Variant="danger" Title="Error:" Message="@VM.ErrorMessage" OnDismiss="VM.ClearAlerts" />
 
     <div class="row g-4">
         <ProductForm FormModel="VM.FormModel"
@@ -57,27 +42,15 @@
                      Pagination="VM.Pagination" 
                      OnPageChanged="VM.LoadProductsAsync" 
                              OnFilterChanged="VM.SetPantryOnlyAsync"
-                     OnQuickAddPantryItem="VM.QuickAddPantryItemAsync" 
-                     OnOpenPantryModal="VM.OpenPantryModal" 
+                     OnQuickAddPantryItem="Pantry.QuickAddAsync" 
+                     OnOpenPantryModal="Pantry.Open" 
                      OnStartEditing="VM.StartEditing" 
                      OnPromptDelete="VM.PromptDelete" />
     </div>
 </div>
 
 <!-- Pantry Modal -->
-@if (VM.ActivePantryProduct is not null)
-{
-    <PantryModal Product="VM.ActivePantryProduct"
-                 EditingPantryItemId="VM.EditingPantryItemId"
-                 Quantity="VM.PantryFormQuantity"
-                 IsSaving="VM.IsSavingPantry"
-                 OnQuantityChanged="(e) => Task.FromResult(decimal.TryParse(e.Value?.ToString(), out var q) ? VM.PantryFormQuantity = q : 1)"
-                 OnSave="VM.SavePantryItemAsync"
-                 OnClose="VM.ClosePantryModal"
-                 OnResetForm="VM.ResetPantryForm"
-                 OnStartEditingItem="VM.StartEditingPantryItem"
-                 OnDeleteItem="VM.DeletePantryItemAsync" />
-}
+<PantryModal />
 
 <!-- Delete Confirmation Modal -->
 @if (VM.ProductToDeleteId.HasValue)
@@ -114,8 +87,19 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
+        VM.StateChanged += HandleStateChanged;
+        Pantry.StateChanged += HandleStateChanged;
+
         await Task.WhenAll(
             VM.LoadCategoriesAsync(),
             VM.LoadProductsAsync(VM.Pagination.CurrentPage));
+    }
+
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        VM.StateChanged -= HandleStateChanged;
+        Pantry.StateChanged -= HandleStateChanged;
     }
 }

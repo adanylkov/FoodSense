@@ -21,6 +21,8 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 builder.Services.AddScoped<IReceiptReaderFactory, ReceiptReaderFactory>();
 builder.Services.AddScoped<IProductApiService, ProductApiService>();
 builder.Services.AddScoped<IMatchApiService, MatchApiService>();
+builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<PantryViewModel>();
 builder.Services.AddScoped<ProductsViewModel>();
 builder.Services.AddScoped<ReceiptUploaderViewModel>();
 
