@@ -1,10 +1,6 @@
 @page "/products"
 @rendermode InteractiveServer
-@using FoodSense.Common.Models
-@using FoodSense.ViewModels
-@implements IDisposable
-@inject ProductsViewModel VM
-@inject PantryViewModel Pantry
+@inject ProductListViewModel Catalog
 
 <PageTitle>FoodSense - Product Catalog</PageTitle>
 
@@ -20,86 +16,14 @@
     </div>
 </div>
 
-<ReceiptUploader OnReceiptItemsAdded="() => VM.LoadProductsAsync(VM.Pagination.CurrentPage)" />
+<ReceiptUploader OnReceiptItemsAdded="Catalog.ReloadAsync" />
 
-<div>
-    <!-- Status Alerts -->
-    <AlertBanner Variant="success" Title="Success!" Message="@VM.SuccessMessage" OnDismiss="VM.ClearAlerts" />
-    <AlertBanner Variant="danger" Title="Error:" Message="@VM.ErrorMessage" OnDismiss="VM.ClearAlerts" />
+<StatusAlerts />
 
-    <div class="row g-4">
-        <ProductForm FormModel="VM.FormModel"
-                     Categories="VM.Categories"
-                     EditingProductId="VM.EditingProductId"
-                     IsSaving="VM.IsSaving"
-                     OnSubmit="VM.SaveProductAsync"
-                     OnCancel="VM.ResetForm"
-                     OnBarcodeBlur="VM.HandleBarcodeInputAsync" />
-
-                <ProductList Products="VM.Products"
-                     IsLoading="VM.IsLoading" 
-                             PantryOnly="VM.PantryOnly"
-                     Pagination="VM.Pagination" 
-                     OnPageChanged="VM.LoadProductsAsync" 
-                             OnFilterChanged="VM.SetPantryOnlyAsync"
-                     OnQuickAddPantryItem="Pantry.QuickAddAsync" 
-                     OnOpenPantryModal="Pantry.Open" 
-                     OnStartEditing="VM.StartEditing" 
-                     OnPromptDelete="VM.PromptDelete" />
-    </div>
+<div class="row g-4">
+    <ProductForm />
+    <ProductList />
 </div>
 
-<!-- Pantry Modal -->
 <PantryModal />
-
-<!-- Delete Confirmation Modal -->
-@if (VM.ProductToDeleteId.HasValue)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" role="dialog" aria-modal="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow rounded-4 p-2">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold text-danger">Confirm Deletion</h5>
-                    <button type="button" class="btn-close" @onclick="VM.CancelDelete" aria-label="Close"></button>
-                </div>
-                <div class="modal-body py-3">
-                    <p class="text-secondary mb-0">Are you sure you want to delete this product? This operation cannot be reversed.</p>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-3 px-4 fw-semibold" @onclick="VM.CancelDelete">Cancel</button>
-                    <button type="button" class="btn btn-danger rounded-3 px-4 fw-semibold" @onclick="VM.ExecuteDeleteAsync">
-                        @if (VM.IsSaving)
-                        {
-                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
-                            <span>Deleting...</span>
-                        }
-                        else
-                        {
-                            <span>Delete</span>
-                        }
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@code {
-    protected override async Task OnInitializedAsync()
-    {
-        VM.StateChanged += HandleStateChanged;
-        Pantry.StateChanged += HandleStateChanged;
-
-        await Task.WhenAll(
-            VM.LoadCategoriesAsync(),
-            VM.LoadProductsAsync(VM.Pagination.CurrentPage));
-    }
-
-    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-    {
-        VM.StateChanged -= HandleStateChanged;
-        Pantry.StateChanged -= HandleStateChanged;
-    }
-}
+<ConfirmDeleteModal />

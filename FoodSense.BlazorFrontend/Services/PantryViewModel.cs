@@ -108,7 +108,8 @@ public class PantryViewModel(IProductApiService productApi, AlertService alerts)
     {
         if (ActiveProduct is null) return;
         ActiveProduct = products.FirstOrDefault(p => p.Id == ActiveProduct.Id);
+        NotifyStateChanged();
     }
 
-    private Task RaisePantryChangedAsync() => PantryChanged?.Invoke() ?? Task.CompletedTask;
+    private Task RaisePantryChangedAsync() => PantryChanged.InvokeAllAsync();
 }

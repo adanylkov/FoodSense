@@ -1,7 +1,5 @@
 @using FoodSense.Common.Models
-@using FoodSense.ViewModels
-@implements IDisposable
-@inject PantryViewModel VM
+@inherits ViewModelComponent<PantryViewModel>
 
 @if (VM.ActiveProduct is { } product)
 {
@@ -94,12 +92,4 @@
         </div>
     </div>
 </div>
-}
-
-@code {
-    protected override void OnInitialized() => VM.StateChanged += HandleStateChanged;
-
-    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose() => VM.StateChanged -= HandleStateChanged;
 }

@@ -1,6 +1,7 @@
 @using System.Diagnostics
 @using BlazorBarcodeScanner.ZXing.JS
 @using FoodSense.Common.Models
+@inherits ViewModelComponent<ProductFormViewModel>
 
 <aside class="col-lg-4">
     <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
@@ -27,7 +28,7 @@
                                    class="form-control"
                                    placeholder="e.g. 5449000000996"
                                    @bind-Value="FormModel.Barcode"
-                                   @onblur="() => OnBarcodeBlur.InvokeAsync(FormModel.Barcode)" />
+                                   @onblur="() => VM.LookupBarcodeAsync(FormModel.Barcode)" />
                         <button type="button"
                                 class="btn btn-outline-secondary"
                                 title="Scan barcode with camera"
@@ -139,7 +140,7 @@
 
                     @if (EditingProductId is not null)
                     {
-                        <button class="btn btn-light border w-100 rounded-3 py-2 text-secondary fw-semibold" type="button" @onclick="OnCancel">
+                        <button class="btn btn-light border w-100 rounded-3 py-2 text-secondary fw-semibold" type="button" @onclick="VM.Reset">
                             Cancel
                         </button>
                     }
@@ -156,16 +157,14 @@
 @code {
     private bool isBarcodeScannerOpen;
 
-    [Parameter, EditorRequired] public required ProductDto FormModel { get; set; }
-    [Parameter] public IReadOnlyList<CategoryDto> Categories { get; set; } = [];
-    [Parameter] public int? EditingProductId { get; set; }
-    [Parameter] public bool IsSaving { get; set; }
-
-    [Parameter] public EventCallback OnSubmit { get; set; }
-    [Parameter] public EventCallback OnCancel { get; set; }
-    [Parameter] public EventCallback<string?> OnBarcodeBlur { get; set; }
+    private ProductDto FormModel => VM.FormModel;
+    private IReadOnlyList<CategoryDto> Categories => VM.Categories;
+    private int? EditingProductId => VM.EditingProductId;
+    private bool IsSaving => VM.IsSaving;
 
     private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
+
+    protected override Task OnInitializedAsync() => VM.LoadCategoriesAsync();
 
     private static IEnumerable<(int Id, string Label)> FlattenCategories(
         IEnumerable<CategoryDto> categories,
@@ -194,7 +193,7 @@
 
         Debug.Assert(FormModel.FrontImageUrl != null, "FormModel.FrontImageUrl should not be null before submission.");
 
-        await OnSubmit.InvokeAsync();
+        await VM.SaveAsync();
     }
 
     private void OpenBarcodeScanner()
@@ -211,6 +210,6 @@
     {
         FormModel.Barcode = args.BarcodeText;
         isBarcodeScannerOpen = false;
-        await OnBarcodeBlur.InvokeAsync(FormModel.Barcode);
+        await VM.LookupBarcodeAsync(FormModel.Barcode);
     }
 }

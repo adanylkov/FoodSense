@@ -1,0 +1,13 @@
+@implements IDisposable
+@inject AlertService Alerts
+
+<AlertBanner Variant="success" Title="Success!" Message="@Alerts.Success" OnDismiss="Alerts.Clear" />
+<AlertBanner Variant="danger" Title="Error:" Message="@Alerts.Error" OnDismiss="Alerts.Clear" />
+
+@code {
+    protected override void OnInitialized() => Alerts.Changed += HandleChanged;
+
+    private void HandleChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Alerts.Changed -= HandleChanged;
+}
