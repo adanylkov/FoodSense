@@ -1,6 +1,9 @@
 @using FoodSense.Common.Models
 @using System.Text.Json
 @inject IJSRuntime JS
+@inject PantryViewModel Pantry
+@inject ProductFormViewModel Form
+@inject ProductDeletionViewModel Deletion
 
 <div class="col">
     <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
@@ -9,10 +12,10 @@
             <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Copy JSON Debug Info" @onclick="CopyJsonToClipboard">
                 🐞
             </button>
-            <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Edit" @onclick="() => OnStartEditing.InvokeAsync(Product)">
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" title="Edit" @onclick="() => Form.StartEditing(Product)">
                 ✏️
             </button>
-            <button class="btn btn-light btn-sm rounded-circle shadow-sm text-danger" title="Delete" @onclick="() => OnPromptDelete.InvokeAsync(Product.Id)">
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm text-danger" title="Delete" @onclick="() => Deletion.Prompt(Product.Id)">
                 🗑️
             </button>
         </div>
@@ -49,11 +52,11 @@
 
             <div class="d-flex gap-2 mt-auto">
                 <button class="btn btn-outline-primary btn-sm rounded-3 w-100 fw-semibold extra-small" 
-                        @onclick="() => OnQuickAddPantryItem.InvokeAsync(Product.Id)">
+                        @onclick="() => Pantry.QuickAddAsync(Product.Id)">
                     + Quick Add
                 </button>
                 <button class="btn btn-primary btn-sm rounded-3 w-100 fw-semibold extra-small" 
-                        @onclick="() => OnOpenPantryModal.InvokeAsync(Product)">
+                        @onclick="() => Pantry.Open(Product)">
                     Manage Stock
                 </button>
             </div>
@@ -65,10 +68,6 @@
     private const string PlaceholderImagePath = "/images/product-placeholder.svg";
 
     [Parameter, EditorRequired] public required ProductDto Product { get; set; }
-    [Parameter] public EventCallback<int> OnQuickAddPantryItem { get; set; }
-    [Parameter] public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
-    [Parameter] public EventCallback<ProductDto> OnStartEditing { get; set; }
-    [Parameter] public EventCallback<int> OnPromptDelete { get; set; }
 
     private string GetImageSource(string? imageUrl)
         => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;

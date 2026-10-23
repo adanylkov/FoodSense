@@ -1,25 +1,26 @@
 @using FoodSense.Common.Models
+@inherits ViewModelComponent<ProductListViewModel>
 
 <section class="col-lg-8" aria-labelledby="catalog-heading">
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 id="catalog-heading" class="h5 fw-bold mb-0">Existing Catalog</h2>
         <span class="badge bg-body-tertiary text-secondary border px-3 py-2 rounded-pill fw-normal">
-            Page @Pagination.CurrentPage of @(Pagination.TotalPages == 0 ? 1 : Pagination.TotalPages)
+            Page @VM.Pagination.CurrentPage of @(VM.Pagination.TotalPages == 0 ? 1 : VM.Pagination.TotalPages)
         </span>
     </div>
 
     <div class="nav nav-tabs mb-4" role="tablist" aria-label="Product catalog filters">
-        <button class="nav-link @(PantryOnly ? "" : "active")" type="button"
-                aria-selected="@(!PantryOnly)" @onclick="() => OnFilterChanged.InvokeAsync(false)">
+        <button class="nav-link @(VM.PantryOnly ? "" : "active")" type="button"
+                aria-selected="@(!VM.PantryOnly)" @onclick="() => VM.SetPantryOnlyAsync(false)">
             All products
         </button>
-        <button class="nav-link @(PantryOnly ? "active" : "")" type="button"
-                aria-selected="@PantryOnly" @onclick="() => OnFilterChanged.InvokeAsync(true)">
+        <button class="nav-link @(VM.PantryOnly ? "active" : "")" type="button"
+                aria-selected="@VM.PantryOnly" @onclick="() => VM.SetPantryOnlyAsync(true)">
             Products in stock
         </button>
     </div>
 
-    @if (IsLoading)
+    @if (VM.IsLoading)
     {
         <div class="text-center py-5 my-5">
             <div class="spinner-border text-primary mb-3" role="status">
@@ -28,7 +29,7 @@
             <p class="text-secondary">Fetching product database...</p>
         </div>
     }
-    else if (Products == null || !Products.Any())
+    else if (VM.Products.Count == 0)
     {
         <div class="card border-0 shadow-sm rounded-4 text-center p-5">
             <div class="card-body">
@@ -40,30 +41,16 @@
     else
     {
         <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var product in Products)
+            @foreach (var product in VM.Products)
             {
-                <ProductCard Product="product" 
-                             OnQuickAddPantryItem="OnQuickAddPantryItem" 
-                             OnOpenPantryModal="OnOpenPantryModal" 
-                             OnStartEditing="OnStartEditing" 
-                             OnPromptDelete="OnPromptDelete" />
+                <ProductCard @key="product.Id" Product="product" />
             }
         </div>
 
-        <PaginationControls Pagination="Pagination" OnPageChanged="OnPageChanged" />
+        <PaginationControls Pagination="VM.Pagination" OnPageChanged="VM.LoadAsync" />
     }
 </section>
 
 @code {
-    [Parameter] public IEnumerable<ProductDto>? Products { get; set; }
-    [Parameter] public bool IsLoading { get; set; }
-    [Parameter] public bool PantryOnly { get; set; }
-    [Parameter, EditorRequired] public PaginationModel Pagination { get; set; } = new();
-
-    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
-    [Parameter] public EventCallback<int> OnQuickAddPantryItem { get; set; }
-    [Parameter] public EventCallback<ProductDto> OnOpenPantryModal { get; set; }
-    [Parameter] public EventCallback<ProductDto> OnStartEditing { get; set; }
-    [Parameter] public EventCallback<int> OnPromptDelete { get; set; }
-    [Parameter] public EventCallback<bool> OnFilterChanged { get; set; }
+    protected override Task OnInitializedAsync() => VM.LoadAsync(VM.Pagination.CurrentPage);
 }
