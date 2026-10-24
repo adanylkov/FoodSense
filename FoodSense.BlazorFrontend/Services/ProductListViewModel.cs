@@ -14,6 +14,7 @@ public class ProductListViewModel : ViewModelBase, IDisposable
     public PaginationModel Pagination { get; } = new();
     public bool PantryOnly { get; private set; }
     public bool IsLoading { get; private set; }
+    public ProductListViewType ViewType { get; set; } = ProductListViewType.List;
 
     public ProductListViewModel(
         IProductApiService productApi,
@@ -63,4 +64,10 @@ public class ProductListViewModel : ViewModelBase, IDisposable
         PantryOnly = pantryOnly;
         await LoadAsync(1);
     }
+}
+
+public enum ProductListViewType
+{
+    List,
+    Grid
 }

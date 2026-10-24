@@ -20,6 +20,15 @@
         </button>
     </div>
 
+    <div class="btn-group mb-4" role="group" aria-label="Product catalog view type">
+        <button class=@($"btn btn-{(VM.ViewType == ProductListViewType.List ? "primary" : "outline-primary")}") @onclick="() => VM.ViewType = ProductListViewType.List">
+            List View
+        </button>
+        <button class=@($"btn btn-{(VM.ViewType == ProductListViewType.Grid ? "primary" : "outline-primary")}") @onclick="() => VM.ViewType = ProductListViewType.Grid">
+            Grid View
+        </button>
+    </div>
+
     @if (VM.IsLoading)
     {
         <div class="text-center py-5 my-5">
@@ -40,12 +49,25 @@
     }
     else
     {
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            @foreach (var product in VM.Products)
-            {
-                <ProductCard @key="product.Id" Product="product" />
-            }
-        </div>
+        @if (VM.ViewType == ProductListViewType.Grid)
+        {
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                @foreach (var product in VM.Products)
+                {
+                    <ProductCard @key="product.Id" Product="product" />
+                }
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var product in VM.Products)
+                {
+                    <ProductListItem @key="product.Id" Product="product" />
+                }
+            </div>
+        }
+
 
         <PaginationControls Pagination="VM.Pagination" OnPageChanged="VM.LoadAsync" />
     }

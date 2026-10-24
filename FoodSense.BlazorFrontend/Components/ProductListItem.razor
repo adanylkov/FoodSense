@@ -1,0 +1,97 @@
+@using FoodSense.Common.Models
+@using System.Text.Json
+@inject IJSRuntime JS
+@inject PantryViewModel Pantry
+@inject ProductFormViewModel Form
+@inject ProductDeletionViewModel Deletion
+
+<article class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-body p-3 p-md-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <div class="bg-body-tertiary rounded-3 d-flex align-items-center justify-content-center"
+                     style="width: 88px; height: 88px;">
+                    <img src="@GetImageSource(Product.FrontImageUrl)"
+                         alt="@Product.ProductName"
+                         class="img-fluid object-fit-contain"
+                         style="max-height: 72px; max-width: 72px;" />
+                </div>
+            </div>
+
+            <div class="col min-width-0">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <h3 class="h6 fw-bold text-dark mb-0 text-truncate">@Product.ProductName</h3>
+                    @if ((Product.PantryItems?.Sum(p => p.Quantity) ?? 0) > 0)
+                    {
+                        <span class="badge bg-success-subtle text-success-emphasis border rounded-pill extra-small">In stock</span>
+                    }
+                </div>
+                <p class="text-secondary extra-small mb-2">
+                    Barcode: @(string.IsNullOrWhiteSpace(Product.Barcode) ? "-" : Product.Barcode)
+                </p>
+
+                <div class="d-flex flex-wrap gap-3 extra-small text-secondary">
+                    <span>
+                        <span class="fw-semibold text-dark">@(Product.PantryItems?.Sum(p => p.Quantity) ?? 0)</span>
+                        item(s) in pantry
+                    </span>
+                    @if (Product.Nutrients != null)
+                    {
+                        <span>@Product.Nutrients.EnergyKcal kcal</span>
+                        <span>@Product.Nutrients.Proteins g protein</span>
+                        <span>@Product.Nutrients.Carbohydrates g carbs</span>
+                        <span>@Product.Nutrients.Fat g fat</span>
+                    }
+                </div>
+            </div>
+
+            <div class="col-12 col-md-auto">
+                <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                    <button class="btn btn-outline-primary btn-sm rounded-3 fw-semibold extra-small"
+                            @onclick="() => Pantry.QuickAddAsync(Product.Id)">
+                        + Quick Add
+                    </button>
+                    <button class="btn btn-primary btn-sm rounded-3 fw-semibold extra-small"
+                            @onclick="() => Pantry.Open(Product)">
+                        Manage Stock
+                    </button>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-light btn-sm rounded-circle shadow-sm"
+                                title="Copy JSON Debug Info"
+                                aria-label="Copy JSON debug info"
+                                @onclick="CopyJsonToClipboard">
+                            🐞
+                        </button>
+                        <button class="btn btn-light btn-sm rounded-circle shadow-sm"
+                                title="Edit"
+                                aria-label="Edit product"
+                                @onclick="() => Form.StartEditing(Product)">
+                            ✏️
+                        </button>
+                        <button class="btn btn-light btn-sm rounded-circle shadow-sm text-danger"
+                                title="Delete"
+                                aria-label="Delete product"
+                                @onclick="() => Deletion.Prompt(Product.Id)">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+
+@code {
+    private const string PlaceholderImagePath = "/images/product-placeholder.svg";
+
+    [Parameter, EditorRequired] public required ProductDto Product { get; set; }
+
+    private string GetImageSource(string? imageUrl)
+        => string.IsNullOrWhiteSpace(imageUrl) ? PlaceholderImagePath : imageUrl;
+
+    private async Task CopyJsonToClipboard()
+    {
+        var json = JsonSerializer.Serialize(Product, new JsonSerializerOptions { WriteIndented = true });
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+    }
+}
