@@ -3,10 +3,12 @@ namespace FoodSense.BlazorFrontend.ViewModels;
 using FoodSense.Common.Models;
 using FoodSense.ViewModels;
 using FoodSense.Services;
+using FoodSense.BlazorFrontend.Services;
 
 public class AddProductModalViewModel : ViewModelBase
 {
     private readonly IProductApiService _productApi;
+    private readonly ICalorieTrackerApiService _calorieTrackerApi;
 
     public bool IsOpen { get; private set; }
     public MealType CurrentMealType { get; private set; } = MealType.Lunch;
@@ -15,14 +17,22 @@ public class AddProductModalViewModel : ViewModelBase
     public string SearchQuery { get; set; } = string.Empty;
     public string BarcodeQuery { get; set; } = string.Empty;
     public List<ProductDto> SearchResults { get; private set; } = [];
-    public ProductDto? SelectedProduct { get; private set; }
-    public decimal Quantity { get; set; } = 100m; // domyślnie 100g/ml
+    
+    // Lista wielu wybranych produktów do dodania
+    public List<SelectedMealItem> SelectedItems { get; private set; } = [];
+
+    // Sumaryczne makro dla całego posiłku
+    public double TotalCalories => SelectedItems.Sum(i => i.Calories);
+    public double TotalProtein => SelectedItems.Sum(i => i.Protein);
+    public double TotalFat => SelectedItems.Sum(i => i.Fat);
+    public double TotalCarbs => SelectedItems.Sum(i => i.Carbs);
 
     public event Func<Task>? ProductAdded;
 
-    public AddProductModalViewModel(IProductApiService productApi, AlertService alerts) : base(alerts)
+    public AddProductModalViewModel(IProductApiService productApi, AlertService alerts, ICalorieTrackerApiService calorieTrackerApi) : base(alerts)
     {
         _productApi = productApi;
+        _calorieTrackerApi = calorieTrackerApi;
     }
 
     public void Open(MealType mealType)
@@ -32,8 +42,7 @@ public class AddProductModalViewModel : ViewModelBase
         SearchQuery = string.Empty;
         BarcodeQuery = string.Empty;
         SearchResults.Clear();
-        SelectedProduct = null;
-        Quantity = 100m;
+        SelectedItems.Clear();
         NotifyStateChanged();
     }
 
@@ -48,17 +57,23 @@ public class AddProductModalViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(SearchQuery))
         {
             SearchResults.Clear();
+            NotifyStateChanged();
             return;
         }
 
         await RunAsync(async () =>
         {
-            // Możesz użyć GetProductsAsync z filtrowaniem lub dedykowanej metody wyszukiwania po nazwie
             var response = await _productApi.GetProductsByNameAsync(SearchQuery.Trim());
             if (response != null)
             {
-                SearchResults = response.ToList();        
+                // Upewniamy się, że pasuje do typu zwracanego przez GetProductsByNameAsync (kolekcja lub pojedynczy obiekt)
+                SearchResults = response.ToList();
             }
+            else
+            {
+                SearchResults.Clear();
+            }
+            NotifyStateChanged();
         });
     }
 
@@ -71,53 +86,78 @@ public class AddProductModalViewModel : ViewModelBase
             var product = await _productApi.GetProductByBarcodeAsync(BarcodeQuery.Trim());
             if (product != null)
             {
-                SelectedProduct = product;
-                Alerts.Success = $"Znaleziono produkt: {product.ProductName}";
+                AddProduct(product);
+                BarcodeQuery = string.Empty;
+                Alerts.Success = $"Dodano do listy: {product.ProductName}";
             }
             else
             {
                 Alerts.Error = "Nie znaleziono produktu o takim kodzie kreskowym.";
             }
+            NotifyStateChanged();
         });
     }
 
-    public void SelectProduct(ProductDto product)
+    public void AddProduct(ProductDto product)
     {
-        SelectedProduct = product;
+        var existing = SelectedItems.FirstOrDefault(i => i.Product.Id == product.Id);
+        if (existing != null)
+        {
+            existing.Quantity += 100m; // domyślnie dodaj kolejne 100g
+        }
+        else
+        {
+            SelectedItems.Add(new SelectedMealItem { Product = product, Quantity = 100m });
+        }
+
         SearchResults.Clear();
+        SearchQuery = string.Empty;
+        NotifyStateChanged();
+    }
+
+    public void RemoveItem(SelectedMealItem item)
+    {
+        SelectedItems.Remove(item);
+        NotifyStateChanged();
     }
 
     public async Task ConfirmConsumptionAsync()
     {
-        if (SelectedProduct == null || Quantity <= 0) return;
+        if (!SelectedItems.Any()) return;
 
         await RunAsync(async () =>
         {
-            // var response = await _productApi.LogAndConsumeAsync(
-            //     productId: SelectedProduct.Id,
-            //     quantity: Quantity,
-            //     pantryItemId: null, // lub powiązany pantryItem jeśli dostępny
-            //     mealType: CurrentMealType
-            // );
+            bool allSuccess = true;
 
-            // if (response.IsSuccessStatusCode)
-            // {
-            //     Alerts.Success = "Pomyślnie dodano posiłek!";
-            //     Close();
-            //     if (ProductAdded != null) await ProductAdded.Invoke();
-            // }
-            // else
-            // {
-            //     var error = await response.Content.ReadAsStringAsync();
-            //     Alerts.Error = $"Błąd zapisu: {error}";
-            // }
+            foreach (var item in SelectedItems)
+            {
+                var response = await _calorieTrackerApi.LogAndConsumeAsync(
+                    productId: item.Product.Id,
+                    quantity: item.Quantity,
+                    pantryItemId: null,
+                    mealType: CurrentMealType
+                );
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    allSuccess = false;
+                }
+            }
+
+            if (allSuccess)
+            {
+                Alerts.Success = "Pomyślnie dodano produkty do dziennika!";
+                Close();
+                if (ProductAdded != null)
+                {
+                    await ProductAdded.Invoke();
+                }
+            }
+            else
+            {
+                Alerts.Error = "Wystąpił błąd podczas zapisywania niektórych produktów.";
+            }
+            NotifyStateChanged();
         });
-    }
-
-    public async Task ClearSelectedProduct()
-    {
-        SelectedProduct = null;
-        Quantity = 100m;
-        NotifyStateChanged();
     }
 }
