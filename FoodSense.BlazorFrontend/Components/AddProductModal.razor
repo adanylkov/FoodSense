@@ -1,0 +1,89 @@
+@using FoodSense.BlazorFrontend.ViewModels
+@using FoodSense.Common.Models
+@inherits ViewModelComponent<AddProductModalViewModel>
+
+@if (VM.IsOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Dodaj produkt do: @VM.CurrentMealType</h5>
+                    <button type="button" class="btn-close" @onclick="VM.Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    
+                    @if (VM.SelectedProduct == null)
+                    {
+                        <!-- Skanowanie kodu kreskowego -->
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-semibold">Skanuj kod kreskowy (lub wpisz ręcznie)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Wpisz lub zeskanuj kod kreskowy..." @value="VM.BarcodeQuery" @onchange="VM.SearchByBarcodeAsync" />
+                                <button class="btn btn-outline-primary" type="button" @onclick="VM.SearchByBarcodeAsync">Szukaj po kodzie</button>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-muted my-2">- lub -</div>
+
+                        <!-- Wyszukiwanie po nazwie -->
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-semibold">Wyszukaj po nazwie</label>
+                            <input type="text" class="form-control" placeholder="Zacznij pisać nazwę produktu..." 
+                            @bind="VM.SearchQuery" 
+                            @bind:event="oninput" 
+                            @bind:after="VM.SearchProductsAsync" />
+                        </div>
+
+                        <!-- Lista wyników wyszukiwania -->
+                        @if (VM.SearchResults.Any())
+                        {
+                            <div class="list-group mb-3 shadow-sm" style="max-height: 200px; overflow-y: auto;">
+                                @foreach (var prod in VM.SearchResults)
+                                {
+                                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" @onclick="() => VM.SelectProduct(prod)">
+                                        <span class="fw-semibold">@prod.ProductName</span>
+                                        <span class="badge bg-light text-dark border">@prod.Nutrients?.EnergyKcal kcal / 100g</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Wybrany produkt -> podaj ilość -->
+                        <div class="alert alert-success d-flex justify-content-between align-items-center rounded-3">
+                            <div>
+                                <span class="small text-muted d-block">Wybrany produkt:</span>
+                                <strong class="fs-5">@VM.SelectedProduct.ProductName</strong>
+                            </div>
+                            <!-- Naprawiono puste wywołanie onclick -->
+                            <button class="btn btn-sm btn-outline-success" @onclick="VM.ClearSelectedProduct">Zmień</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ilość (w gramach lub ml):</label>
+                            <input type="number" class="form-control form-control-lg" @bind="VM.Quantity" min="1" step="1" />
+                        </div>
+                    }
+
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" @onclick="VM.Close">Anuluj</button>
+                    @if (VM.SelectedProduct != null)
+                    {
+                        <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="VM.ConfirmConsumptionAsync">Dodaj do dziennika</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public void Open(MealType mealType)
+    {
+        VM.Open(mealType);
+        StateHasChanged();
+    }
+}

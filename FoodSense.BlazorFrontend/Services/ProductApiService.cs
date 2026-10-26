@@ -17,6 +17,7 @@ public interface IProductApiService
     Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product);
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync();
     Task<ProductDto?> GetProductByNameAsync(string productName);
+    Task<IEnumerable<ProductDto>?> GetProductsByNameAsync(string productName);
 }
 
 public class ProductApiService : IProductApiService
@@ -88,5 +89,10 @@ public class ProductApiService : IProductApiService
     public Task<ProductDto?> GetProductByNameAsync(string productName)
     {
         return _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProductByName/{Uri.EscapeDataString(productName)}");
+    }
+
+    public async Task<IEnumerable<ProductDto>?> GetProductsByNameAsync(string productName)
+    {
+        return await _http.GetFromJsonAsync<IEnumerable<ProductDto>>($"api/Food/GetProductsByName/{Uri.EscapeDataString(productName)}");
     }
 }

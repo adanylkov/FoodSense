@@ -14,6 +14,7 @@ public interface IProductRepository
     Task UpdateAsync(Product product);
     Task DeleteAsync(int id);
     Task<Product?> GetByNameAsync(string name, bool includePantryItems = false);
+    Task<List<Product>> GetAllByNameAsync(string name, bool includePantryItems = false);
 }
 
 public class ProductRepository(FoodSenseDbContext context) : IProductRepository
@@ -90,7 +91,7 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
             .Replace("\\", "\\\\")
             .Replace("%", "\\%")
             .Replace("_", "\\_");
-        var pattern = $"{escapedName}%";
+        var pattern = $"%{escapedName}%";
         var query = context.Products.AsNoTracking();
 
         if (includePantryItems)
@@ -102,5 +103,25 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
             .Where(p => EF.Functions.Like(p.ProductName, pattern, "\\"))
             .OrderBy(p => p.Id)
             .FirstOrDefaultAsync();
+    }
+
+    public Task<List<Product>> GetAllByNameAsync(string name, bool includePantryItems = false)
+    {
+        var escapedName = name
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+        var pattern = $"%{escapedName}%";
+        var query = context.Products.AsNoTracking();
+
+        if (includePantryItems)
+        {
+            query = query.Include(p => p.PantryItems);
+        }
+
+        return query
+            .Where(p => EF.Functions.Like(p.ProductName, pattern, "\\"))
+            .OrderBy(p => p.Id)
+            .ToListAsync();
     }
 }

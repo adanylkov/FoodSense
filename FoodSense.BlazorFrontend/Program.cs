@@ -1,6 +1,7 @@
 using FoodSense.API.Services;
 using FoodSense.BlazorFrontend.Components;
 using FoodSense.BlazorFrontend.Services;
+using FoodSense.BlazorFrontend.ViewModels;
 using FoodSense.ReceiptReader;
 using FoodSense.Services;
 using FoodSense.ViewModels;
@@ -21,12 +22,15 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 builder.Services.AddScoped<IReceiptReaderFactory, ReceiptReaderFactory>();
 builder.Services.AddScoped<IProductApiService, ProductApiService>();
 builder.Services.AddScoped<IMatchApiService, MatchApiService>();
+builder.Services.AddScoped<ICalorieTrackerApiService, CalorieTrackerApiService>();
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<PantryViewModel>();
 builder.Services.AddScoped<ProductFormViewModel>();
 builder.Services.AddScoped<ProductDeletionViewModel>();
 builder.Services.AddScoped<ProductListViewModel>();
 builder.Services.AddScoped<ReceiptUploaderViewModel>();
+builder.Services.AddScoped<CalorieTrackerViewModel>();
+builder.Services.AddScoped<AddProductModalViewModel>();
 
 var app = builder.Build();
 

@@ -58,6 +58,14 @@ namespace FoodSense.API.Controllers
             return Ok(product.ToDto());
         }
 
+        [HttpGet("{name}")]
+        public async Task<IActionResult> GetProductsByName(string name)
+        {
+            var products = await productService.GetProductsByNameAsync(name);
+            if (products is null || !products.Any()) return NotFound("No products found.");
+            return Ok(products.Select(p => p.ToDto()));
+        }
+
         [HttpPost]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
         {

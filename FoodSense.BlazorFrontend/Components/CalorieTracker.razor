@@ -1,0 +1,119 @@
+@page "/tracker"
+@rendermode InteractiveServer
+@using FoodSense.BlazorFrontend.ViewModels
+@using FoodSense.Common.Models
+@inherits ViewModelComponent<CalorieTrackerViewModel>
+
+<PageTitle>Tracker Kalorii</PageTitle>
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h2 class="fw-bold mb-0">Dziennik Kalorii</h2>
+        <input type="date" class="form-control w-auto" value="@VM.SelectedDate.ToString("yyyy-MM-dd")"
+               @onchange="VM.ChangeDateAsync" />
+    </div>
+
+    @if (VM.IsLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-secondary mt-2">Ładowanie dziennika...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Podsumowanie celów -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card p-3 shadow-sm rounded-4 border-0">
+                    <span class="text-secondary small">Kalorie</span>
+                    <h3 class="fw-bold mb-0">@VM.TotalCalories.ToString("N0") <span class="fs-6 text-muted">/
+                        @VM.Goals.TargetCalories kcal</span></h3>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 shadow-sm rounded-4 border-0">
+                        <span class="text-secondary small">Białko</span>
+                        <h4 class="fw-bold mb-0">@VM.TotalProtein.ToString("N1") <span class="fs-6 text-muted">/
+                            @VM.Goals.TargetProtein g</span></h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 shadow-sm rounded-4 border-0">
+                            <span class="text-secondary small">Tłuszcz</span>
+                            <h4 class="fw-bold mb-0">@VM.TotalFat.ToString("N1") <span class="fs-6 text-muted">/ @VM.Goals.TargetFat
+                                g</span></h4>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm rounded-4 border-0">
+                                <span class="text-secondary small">Węglowodany</span>
+                                <h4 class="fw-bold mb-0">@VM.TotalCarbs.ToString("N1") <span class="fs-6 text-muted">/
+                                    @VM.Goals.TargetCarbs g</span></h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sekcje posiłków -->
+                        @foreach (MealType mealType in Enum.GetValues(typeof(MealType)))
+                        {
+                            // Tworzymy lokalną kopię zmiennej dla domknięcia (closure) w lambdzie
+                            var currentMeal = mealType;
+
+                            <div class="card mb-3 shadow-sm rounded-4 border-0">
+                                <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+                                    <h5 class="mb-0 fw-bold">@currentMeal</h5>
+                                    <!-- Używamy lokalnej zmiennej currentMeal zamiast mealType -->
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="() => OpenAddModal(currentMeal)">
+                                        + Dodaj produkt
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    @{
+                                        var entries = VM.LogEntries.Where(e => e.MealType == currentMeal).ToList();
+                                    }
+                                    @if (!entries.Any())
+                                    {
+                                        <p class="text-muted mb-0 small fst-italic">Brak wpisów dla tego posiłku.</p>
+                                    }
+                                    else
+                                    {
+                                        <ul class="list-group list-group-flush">
+                                            @foreach (var entry in entries)
+                                            {
+                                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                    <div>
+                                                        <span class="fw-semibold">@entry.Product.ProductName</span>
+                                                        <span class="text-muted small ms-2">(@entry.ConsumedQuantity g/ml)</span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="badge bg-light text-dark border me-2">@entry.Calories.ToString("N0") kcal</span>
+                                                        <span class="text-muted small">B: @entry.Protein.ToString("N0")g | T: @entry.Fat.ToString("N0")g
+                                                            | W: @entry.Carbs.ToString("N0")g</span>
+                                                        </div>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+<AddProductModal @ref="_addProductModal" />
+
+@code {
+    private AddProductModal? _addProductModal = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VM.LoadAsync();
+    }
+
+    private void OpenAddModal(MealType mealType)
+    {
+        Console.WriteLine($"Opening AddProductModal for {mealType}");
+        _addProductModal?.Open(mealType);
+    }
+}

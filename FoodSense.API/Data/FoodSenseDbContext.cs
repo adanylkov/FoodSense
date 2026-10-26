@@ -9,6 +9,8 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<PantryItem> PantryItems { get; set; }
     public DbSet<ProductMapping> ProductMappings { get; set; }
     public DbSet<Category> Categories { get; set; }
+    public DbSet<FoodLogEntry> FoodLogEntries { get; set; }
+    public DbSet<UserNutritionalGoals> UserNutritionalGoals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,7 +108,33 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
                 .HasForeignKey(pm => pm.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<FoodLogEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ConsumedQuantity).HasPrecision(18, 2);
+            entity.Property(e => e.Calories).HasPrecision(18, 2);
+            entity.Property(e => e.Protein).HasPrecision(18, 2);
+            entity.Property(e => e.Fat).HasPrecision(18, 2);
+            entity.Property(e => e.Carbs).HasPrecision(18, 2);
+
+            entity.HasOne(e => e.Product)
+                .WithMany()
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.UserId, e.Date });
+        });
+
+        modelBuilder.Entity<UserNutritionalGoals>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TargetCalories).HasPrecision(18, 2);
+            entity.Property(e => e.TargetProtein).HasPrecision(18, 2);
+            entity.Property(e => e.TargetFat).HasPrecision(18, 2);
+            entity.Property(e => e.TargetCarbs).HasPrecision(18, 2);
+        });
     }
 
-    
+
 }

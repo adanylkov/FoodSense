@@ -84,4 +84,9 @@ public class ProductService(
     {
         return productRepository.GetByNameAsync(name);
     }
+
+    public Task<List<Product>> GetProductsByNameAsync(string name)
+    {
+        return productRepository.GetAllByNameAsync(name);
+    }
 }
