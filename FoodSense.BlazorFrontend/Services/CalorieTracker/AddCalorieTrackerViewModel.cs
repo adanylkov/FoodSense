@@ -4,7 +4,7 @@ using FoodSense.Common.Models;
 using FoodSense.ViewModels;
 using FoodSense.BlazorFrontend.Services;
 
-public class AddProductModalViewModel : ViewModelBase
+public class AddCalorieTrackerViewModel : ViewModelBase
 {
     private readonly IProductApiService _productApi;
     private readonly ICalorieTrackerApiService _calorieTrackerApi;
@@ -28,7 +28,7 @@ public class AddProductModalViewModel : ViewModelBase
 
     public event Func<Task>? ProductAdded;
 
-    public AddProductModalViewModel(IProductApiService productApi, AlertService alerts, ICalorieTrackerApiService calorieTrackerApi) : base(alerts)
+    public AddCalorieTrackerViewModel(IProductApiService productApi, AlertService alerts, ICalorieTrackerApiService calorieTrackerApi) : base(alerts)
     {
         _productApi = productApi;
         _calorieTrackerApi = calorieTrackerApi;

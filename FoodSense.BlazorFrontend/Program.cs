@@ -29,8 +29,9 @@ builder.Services.AddScoped<ProductFormViewModel>();
 builder.Services.AddScoped<ProductDeletionViewModel>();
 builder.Services.AddScoped<ProductListViewModel>();
 builder.Services.AddScoped<ReceiptUploaderViewModel>();
-builder.Services.AddScoped<CalorieTrackerViewModel>();
-builder.Services.AddScoped<AddProductModalViewModel>();
+builder.Services.AddScoped<CalorieTrackerListViewModel>();
+builder.Services.AddScoped<AddCalorieTrackerViewModel>();
+builder.Services.AddScoped<EditCalorieTrackerViewModel>();
 builder.Services.AddScoped<FoodSense.BlazorFrontend.Services.IPantryService, FoodSense.BlazorFrontend.Services.PantryService>();
 
 var app = builder.Build();

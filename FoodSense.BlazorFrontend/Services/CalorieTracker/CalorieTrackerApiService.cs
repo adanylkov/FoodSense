@@ -7,8 +7,10 @@ namespace FoodSense.BlazorFrontend.Services;
 public interface ICalorieTrackerApiService
 {
     Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request);
+    Task<HttpResponseMessage> UpdateConsumptionAsync(EditFoodLogRequest request);
     Task<UserNutritionalGoals?> GetUserGoalsAsync();
     Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date);
+    Task<HttpResponseMessage> DeleteFoodLogEntryAsync(int id);
 }
 
 public class CalorieTrackerApiService : ICalorieTrackerApiService
@@ -25,6 +27,11 @@ public class CalorieTrackerApiService : ICalorieTrackerApiService
         return await _http.PostAsJsonAsync("api/CalorieTracker/LogAndConsumeFromPantry", request);
     }
 
+    public async Task<HttpResponseMessage> UpdateConsumptionAsync(EditFoodLogRequest request)
+    {
+        return await _http.PutAsJsonAsync("api/CalorieTracker/UpdateConsumption", request);
+    }
+
     public async Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date)
     {
         return await _http.GetFromJsonAsync<List<FoodLogEntry>>($"api/CalorieTracker/GetEntries?date={date:yyyy-MM-dd}") ?? [];
@@ -33,5 +40,10 @@ public class CalorieTrackerApiService : ICalorieTrackerApiService
     public async Task<UserNutritionalGoals?> GetUserGoalsAsync()
     {
         return await _http.GetFromJsonAsync<UserNutritionalGoals>("api/CalorieTracker/GetGoals");
+    }
+
+    public Task<HttpResponseMessage> DeleteFoodLogEntryAsync(int id)
+    {
+        return _http.DeleteAsync($"api/CalorieTracker/DeleteConsumption/{id}");
     }
 }

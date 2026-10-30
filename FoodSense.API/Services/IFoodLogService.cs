@@ -11,4 +11,5 @@ public interface IFoodLogService
     Task<UserNutritionalGoals?> GetUserGoalsAsync();
     Task<IEnumerable<FoodLogEntry>> GetEntriesByDateAsync(DateTime date);
     Task<Result> EditConsumptionAsync(EditFoodLogRequest request);
+    Task<Result> DeleteConsumptionAsync(int id);
 }

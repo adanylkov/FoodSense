@@ -8,6 +8,20 @@ namespace FoodSense.API.Services;
 
 public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> logger) : IFoodLogService
 {
+    public async Task<Result> DeleteConsumptionAsync(int id)
+    {
+        var entry = await context.FoodLogEntries.FindAsync(id);
+        if (entry is null)
+        {
+            logger.LogWarning("Food log entry with ID {FoodLogEntryId} not found.", id);
+            return Result.Failure("Food log entry not found.");
+        }
+
+        context.FoodLogEntries.Remove(entry);
+        await context.SaveChangesAsync();
+        return Result.Success();
+    }
+
     public async Task<Result> EditConsumptionAsync(EditFoodLogRequest request)
     {
         var entry = context.FoodLogEntries.FirstOrDefault(e => e.Id == request.FoodLogEntryId);
@@ -30,11 +44,12 @@ public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> 
 
         var newEntry = FoodLogEntryFactory.Create(product, request);
 
-        newEntry.Id = entry.Id;
-        newEntry.UserId = entry.UserId;
-        newEntry.Date = entry.Date;
+        entry.MealType = newEntry.MealType;
+        entry.ConsumedQuantity = newEntry.ConsumedQuantity;
 
-        context.FoodLogEntries.Update(entry);
+        context.Entry(entry.Nutritions)
+            .CurrentValues
+            .SetValues(newEntry.Nutritions);
         await context.SaveChangesAsync();
 
         return Result.Success();

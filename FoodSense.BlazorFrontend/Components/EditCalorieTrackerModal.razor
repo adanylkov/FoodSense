@@ -1,0 +1,139 @@
+@using System.Globalization
+@using FoodSense.BlazorFrontend.ViewModels
+@using FoodSense.Common.Models
+@inherits ViewModelComponent<EditCalorieTrackerViewModel>
+
+@if (VM.IsOpen && VM.CurrentEntry is not null)
+{
+    <div class="edit-entry-backdrop" role="presentation">
+        <div class="edit-entry-panel" role="dialog" aria-modal="true" aria-labelledby="edit-entry-title">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h5 id="edit-entry-title" class="fw-bold mb-1">Edytuj wpis</h5>
+                    <div class="text-muted text-break">@VM.CurrentEntry.Product.Name</div>
+                </div>
+                <button type="button" class="btn-close" aria-label="Zamknij" @onclick="VM.Close"></button>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label small fw-semibold" for="edit-meal-type">Posiłek</label>
+                    <select id="edit-meal-type" class="form-select" value="@VM.MealType" @onchange="VM.SetMealType">
+                        @foreach (var mealType in Enum.GetValues<MealType>())
+                        {
+                            <option value="@mealType">@mealType</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small fw-semibold" for="edit-quantity">Ilość (g/ml)</label>
+                    <input id="edit-quantity" class="form-control" type="number" min="0.01" step="0.01"
+                           value="@FormatNumber(VM.Quantity)" @onchange="e => VM.SetQuantity(ParseDecimal(e))" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-semibold" for="edit-calories">Kalorie</label>
+                    <div class="input-group">
+                        <input id="edit-calories" class="form-control" type="number" min="0" step="0.1"
+                               value="@FormatNumber(VM.CurrentNutritions.Calories)" @onchange="e => VM.SetCalories(ParseDouble(e))" />
+                        <span class="input-group-text">kcal</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-semibold" for="edit-protein">Białko</label>
+                    <div class="input-group">
+                        <input id="edit-protein" class="form-control" type="number" min="0" step="0.1"
+                               value="@FormatNumber(VM.CurrentNutritions.Protein)" @onchange="e => VM.SetProtein(ParseDouble(e))" />
+                        <span class="input-group-text">g</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-semibold" for="edit-fat">Tłuszcz</label>
+                    <div class="input-group">
+                        <input id="edit-fat" class="form-control" type="number" min="0" step="0.1"
+                               value="@FormatNumber(VM.CurrentNutritions.Fat)" @onchange="e => VM.SetFat(ParseDouble(e))" />
+                        <span class="input-group-text">g</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-semibold" for="edit-carbs">Węglowodany</label>
+                    <div class="input-group">
+                        <input id="edit-carbs" class="form-control" type="number" min="0" step="0.1"
+                               value="@FormatNumber(VM.CurrentNutritions.Carbs)" @onchange="e => VM.SetCarbs(ParseDouble(e))" />
+                        <span class="input-group-text">g</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mt-4">
+                <button type="button" class="btn btn-outline-danger order-sm-first" @onclick="VM.RemoveItem">
+                    Usuń wpis
+                </button>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light" @onclick="VM.Close">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="VM.SaveAsync">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .edit-entry-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1055;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: rgba(0, 0, 0, .5);
+    }
+
+    .edit-entry-panel {
+        width: min(100%, 520px);
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        padding: 1.5rem;
+        background: var(--bs-body-bg);
+        border-radius: 1rem;
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, .2);
+    }
+
+    @@media (max-width: 575.98px) {
+        .edit-entry-backdrop {
+            align-items: flex-end;
+            padding: 0;
+        }
+
+        .edit-entry-panel {
+            width: 100%;
+            max-height: 90vh;
+            padding: 1.25rem;
+            border-radius: 1rem 1rem 0 0;
+        }
+    }
+</style>
+
+@code {
+    public void Open(FoodSense.API.Data.Models.FoodLogEntry entry)
+    {
+        VM.Open(entry);
+        StateHasChanged();
+    }
+
+    private static decimal ParseDecimal(ChangeEventArgs args) =>
+        decimal.TryParse(args.Value?.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : throw new ArgumentException("Invalid decimal value", nameof(args));
+
+    private static double ParseDouble(ChangeEventArgs args) =>
+        double.TryParse(args.Value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : throw new ArgumentException("Invalid double value", nameof(args));
+
+    private static string FormatNumber(decimal value) =>
+        value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static string FormatNumber(double value) =>
+        value.ToString("0.##", CultureInfo.InvariantCulture);
+}

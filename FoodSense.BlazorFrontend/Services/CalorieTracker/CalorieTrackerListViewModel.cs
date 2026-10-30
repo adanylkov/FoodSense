@@ -7,7 +7,7 @@ using FoodSense.Services;
 using FoodSense.API.Data.Models;
 using Microsoft.AspNetCore.Components;
 
-public class CalorieTrackerViewModel : ViewModelBase, IDisposable
+public class CalorieTrackerListViewModel : ViewModelBase, IDisposable
 {
     private readonly ICalorieTrackerApiService _calorieTrackerApi;
     
@@ -17,10 +17,11 @@ public class CalorieTrackerViewModel : ViewModelBase, IDisposable
     public bool IsLoading { get; private set; }
     public TotalNutrients TotalNutrients { get; private set; }
 
-    public CalorieTrackerViewModel(AlertService alerts, ICalorieTrackerApiService calorieTrackerApi, AddProductModalViewModel addProductModalViewModel) : base(alerts)
+    public CalorieTrackerListViewModel(AlertService alerts, ICalorieTrackerApiService calorieTrackerApi, AddCalorieTrackerViewModel addProductModalViewModel, EditCalorieTrackerViewModel editProductModalViewModel) : base(alerts)
     {
         _calorieTrackerApi = calorieTrackerApi;
         addProductModalViewModel.ProductAdded += async () => await LoadAsync();
+        editProductModalViewModel.EntryUpdated += async () => await LoadAsync();
         TotalNutrients = new TotalNutrients();
     }
 

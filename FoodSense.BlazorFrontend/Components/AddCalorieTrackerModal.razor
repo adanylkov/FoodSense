@@ -1,6 +1,7 @@
 @using FoodSense.BlazorFrontend.ViewModels
 @using FoodSense.Common.Models
-@inherits ViewModelComponent<AddProductModalViewModel>
+@using BlazorBarcodeScanner.ZXing.JS
+@inherits ViewModelComponent<AddCalorieTrackerViewModel>
 
 @if (VM.IsOpen)
 {
@@ -22,8 +23,14 @@
                             <div class="mb-3">
                                 <label class="form-label text-secondary small fw-semibold">Kod kreskowy</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Wpisz lub zeskanuj..." @value="VM.BarcodeQuery" @onchange="VM.SearchByBarcodeAsync" />
+                                    <input type="text" class="form-control" placeholder="Wpisz lub zeskanuj..." @bind="VM.BarcodeQuery" />
                                     <button class="btn btn-outline-primary" type="button" @onclick="VM.SearchByBarcodeAsync">Szukaj</button>
+                                    <button class="btn btn-outline-secondary" type="button"
+                                            title="Skanuj kod kreskowy aparatem"
+                                            aria-label="Skanuj kod kreskowy aparatem"
+                                            @onclick="OpenBarcodeScanner">
+                                        <span aria-hidden="true">&#128247;</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -146,10 +153,39 @@
     </div>
 }
 
+<BarcodeScanner IsOpen="_isBarcodeScannerOpen"
+                Title="Skanuj kod kreskowy"
+                OnClose="CloseBarcodeScanner"
+                OnBarcodeDetected="HandleBarcodeReceived" />
+
 @code {
+    private bool _isBarcodeScannerOpen;
+
     public void Open(MealType mealType)
     {
         VM.Open(mealType);
         StateHasChanged();
+    }
+
+    private void OpenBarcodeScanner()
+    {
+        _isBarcodeScannerOpen = true;
+    }
+
+    private void CloseBarcodeScanner()
+    {
+        _isBarcodeScannerOpen = false;
+    }
+
+    private Task HandleBarcodeReceived(BarcodeReceivedEventArgs args)
+    {
+        if (!string.IsNullOrWhiteSpace(args.BarcodeText))
+        {
+            VM.BarcodeQuery = args.BarcodeText;
+        }
+
+        _isBarcodeScannerOpen = false;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

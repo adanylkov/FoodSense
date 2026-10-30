@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @using FoodSense.BlazorFrontend.ViewModels
 @using FoodSense.Common.Models
-@inherits ViewModelComponent<CalorieTrackerViewModel>
+@inherits ViewModelComponent<CalorieTrackerListViewModel>
 
 <PageTitle>Tracker Kalorii</PageTitle>
 
@@ -64,7 +64,7 @@
                                 <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
                                     <h5 class="mb-0 fw-bold">@currentMeal</h5>
                                     <!-- Używamy lokalnej zmiennej currentMeal zamiast mealType -->
-                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="() => OpenAddModal(currentMeal)">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" @onclick="() => _addProductModal?.Open(currentMeal)">
                                         + Dodaj produkt
                                     </button>
                                 </div>
@@ -81,39 +81,55 @@
                                         <ul class="list-group list-group-flush">
                                             @foreach (var entry in entries)
                                             {
-                                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                                    <div>
+                                                <li class="list-group-item d-none d-md-flex justify-content-between align-items-center gap-3 px-0">
+                                                    <div class="text-break">
                                                         <span class="fw-semibold">@entry.Product.Name</span>
                                                         <span class="text-muted small ms-2">@entry.ConsumedQuantity.ToString("N0")g</span>
                                                     </div>
-                                                    <div>
-                                                        <span class="badge bg-light text-dark border me-2">@entry.Nutritions.Calories.ToString("N0") kcal</span>
-                                                        <span class="text-muted small">B: @entry.Nutritions.Protein.ToString("N0")g | T: @entry.Nutritions.Fat.ToString("N0")g
-                                                            | W: @entry.Nutritions.Carbs.ToString("N0")g</span>
-                                                        </div>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        }
-                                    </div>
+                                                    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                                                        <span class="badge kcal-color text-light border">@entry.Nutritions.Calories.ToString("N0") kcal</span>
+                                                        <span class="badge protein-color text-light border">Białko: @entry.Nutritions.Protein.ToString("N0")g</span>
+                                                        <span class="badge fat-color text-light border">Tłuszcz: @entry.Nutritions.Fat.ToString("N0")g</span>
+                                                        <span class="badge carbs-color text-light border">Węglowodany: @entry.Nutritions.Carbs.ToString("N0")g</span>
+                                                        <span class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditModal(entry)">Edit</span>
+                                                    </div>
+                                                </li>
+                                                <li class="list-group-item d-md-none px-0">
+                                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                                        <span class="fw-semibold text-break">@entry.Product.Name</span>
+                                                        <span class="text-muted small text-nowrap">@entry.ConsumedQuantity.ToString("N0")g</span>
+                                                    </div>
+                                                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                                        <span class="protein-color small fw-semibold text-nowrap">B: @entry.Nutritions.Protein.ToString("N0")g</span>
+                                                        <span class="fat-color small fw-semibold text-nowrap">T: @entry.Nutritions.Fat.ToString("N0")g</span>
+                                                        <span class="carbs-color small fw-semibold text-nowrap">W: @entry.Nutritions.Carbs.ToString("N0")g</span>
+                                                        <span class="kcal-color small fw-semibold text-nowrap">@entry.Nutritions.Calories.ToString("N0") kcal</span>
+                                                        <span class="btn btn-sm btn-outline-primary ms-auto" @onclick="() => OpenEditModal(entry)">Edit</span>
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
                                 </div>
-                            }
+                            </div>
                         }
-                    </div>
+                    }
+                </div>
 
-<AddProductModal @ref="_addProductModal" />
+<AddCalorieTrackerModal @ref="_addProductModal" />
+<EditCalorieTrackerModal @ref="_editCalorieTrackerModal" />
 
 @code {
-    private AddProductModal? _addProductModal = null!;
+    private AddCalorieTrackerModal? _addProductModal = null!;
+    private EditCalorieTrackerModal? _editCalorieTrackerModal = null!;
 
     protected override async Task OnInitializedAsync()
     {
         await VM.LoadAsync();
     }
 
-    private void OpenAddModal(MealType mealType)
+    private void OpenEditModal(FoodSense.API.Data.Models.FoodLogEntry entry)
     {
-        Console.WriteLine($"Opening AddProductModal for {mealType}");
-        _addProductModal?.Open(mealType);
+        _editCalorieTrackerModal?.Open(entry);
     }
 }

@@ -32,6 +32,17 @@ public class CalorieTrackerController(IFoodLogService foodLogService) : Controll
         return Ok();
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteConsumption(int id)
+    {
+        var result = await foodLogService.DeleteConsumptionAsync(id);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result.ErrorMessage);
+        }
+        return Ok();
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FoodLogEntry>>> GetEntries([FromQuery] DateTime date)
     {
