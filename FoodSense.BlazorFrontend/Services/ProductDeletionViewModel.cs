@@ -1,6 +1,6 @@
 namespace FoodSense.ViewModels;
 
-using FoodSense.Services;
+using FoodSense.BlazorFrontend.Services;
 
 public class ProductDeletionViewModel(IProductApiService productApi, AlertService alerts) : ViewModelBase(alerts)
 {

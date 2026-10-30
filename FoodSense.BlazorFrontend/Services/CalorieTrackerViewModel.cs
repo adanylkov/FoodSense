@@ -9,25 +9,19 @@ using Microsoft.AspNetCore.Components;
 
 public class CalorieTrackerViewModel : ViewModelBase, IDisposable
 {
-    private readonly IProductApiService _productApi;
     private readonly ICalorieTrackerApiService _calorieTrackerApi;
     
     public DateTime SelectedDate { get; private set; } = DateTime.Today;
     public List<FoodLogEntry> LogEntries { get; private set; } = [];
     public UserNutritionalGoals Goals { get; private set; } = new();
     public bool IsLoading { get; private set; }
+    public TotalNutrients TotalNutrients { get; private set; }
 
-    // Obliczane sumy dzienne
-    public double TotalCalories => LogEntries.Sum(e => e.Calories);
-    public double TotalProtein => LogEntries.Sum(e => e.Protein);
-    public double TotalFat => LogEntries.Sum(e => e.Fat);
-    public double TotalCarbs => LogEntries.Sum(e => e.Carbs);
-
-    public CalorieTrackerViewModel(IProductApiService productApi, AlertService alerts, ICalorieTrackerApiService calorieTrackerApi, AddProductModalViewModel addProductModalViewModel) : base(alerts)
+    public CalorieTrackerViewModel(AlertService alerts, ICalorieTrackerApiService calorieTrackerApi, AddProductModalViewModel addProductModalViewModel) : base(alerts)
     {
-        _productApi = productApi;
         _calorieTrackerApi = calorieTrackerApi;
         addProductModalViewModel.ProductAdded += async () => await LoadAsync();
+        TotalNutrients = new TotalNutrients();
     }
 
     public async Task LoadAsync(DateTime? date = null)
@@ -43,6 +37,8 @@ public class CalorieTrackerViewModel : ViewModelBase, IDisposable
             await Task.WhenAll(entriesTask, goalsTask);
 
             LogEntries = await entriesTask;
+            TotalNutrients = CalculateTotalNutrients();
+
             Goals = await goalsTask ?? new();
         }, busy => IsLoading = busy);
     }
@@ -55,8 +51,32 @@ public class CalorieTrackerViewModel : ViewModelBase, IDisposable
         }
     }
 
+    private TotalNutrients CalculateTotalNutrients()
+    {
+        var totalCalories = LogEntries.Sum(entry => entry.Nutritions.Calories);
+        var totalProtein = LogEntries.Sum(entry => entry.Nutritions.Protein);
+        var totalFat = LogEntries.Sum(entry => entry.Nutritions.Fat);
+        var totalCarbs = LogEntries.Sum(entry => entry.Nutritions.Carbs);
+
+        return new TotalNutrients
+        {
+            Calories = totalCalories,
+            Protein = totalProtein,
+            Fat = totalFat,
+            Carbs = totalCarbs
+        };
+    }
+
     public void Dispose()
     {
         // Sprzątanie subskrypcji jeśli występują
     }
+}
+
+public record TotalNutrients
+{
+    public double Calories { get; init; }
+    public double Protein { get; init; }
+    public double Fat { get; init; }
+    public double Carbs { get; init; }
 }

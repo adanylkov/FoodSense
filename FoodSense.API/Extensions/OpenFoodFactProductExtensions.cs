@@ -1,4 +1,5 @@
 using FoodSense.API.Data.Models;
+using FoodSense.API.Data.ValueObjects;
 
 namespace FoodSense.API.Extensions;
 
@@ -9,12 +10,12 @@ public static class OpenFoodFactProductExtensions
         return new Product
         {
             Barcode = barcode,
-            ProductName = openFoodFactProduct.Name,
+            Name = openFoodFactProduct.Name,
             FrontImageUrl = openFoodFactProduct.ImageUrl,
             Nutrients = new Nutrients
             {
                 Carbohydrates = openFoodFactProduct.Nutrients.Carbohydrates,
-                EnergyKcal = openFoodFactProduct.Nutrients.Calories,
+                Kcal = openFoodFactProduct.Nutrients.Calories,
                 Fat = openFoodFactProduct.Nutrients.Fat,
                 Proteins = openFoodFactProduct.Nutrients.Proteins,
                 Salt = openFoodFactProduct.Nutrients.Salt,

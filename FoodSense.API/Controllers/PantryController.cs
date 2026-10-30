@@ -2,6 +2,7 @@ using FoodSense.API.Data.Models;
 using FoodSense.API.Extensions;
 using FoodSense.API.Services;
 using FoodSense.Common.Models;
+using FoodSense.Common.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodSense.API.Controllers
@@ -10,43 +11,17 @@ namespace FoodSense.API.Controllers
     [ApiController]
     public class PantryController(IPantryService pantryService) : ControllerBase
     {
-        [HttpPost("{productId:int}")]
-        public async Task<ActionResult<PantryItem>> AddProductToPantry(int productId)
-        {
-            var item = await pantryService.AddOnePantryItemAsync(productId);
-            return Ok(item.ToDto());
-        }
-
         [HttpPost]
-        public async Task<ActionResult<PantryItem>> CreatePantryItem([FromBody] PantryItemDto pantryItemDto, int productId)
+        public async Task<ActionResult<PantryItem>> CreatePantryItem([FromBody] AddPantryItemRequest request)
         {
-            var pantryItem = new PantryItem
-            {
-                ProductId = productId,
-                Quantity = pantryItemDto.Quantity,
-                UserId = pantryItemDto.UserId,
-                AddedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var newItem = await pantryService.AddPantryItemAsync(productId, pantryItem); 
+            var newItem = await pantryService.AddPantryItemAsync(request); 
             return Ok(newItem.ToDto());
         }
 
         [HttpPut("{pantryItemId:int}")]
-        public async Task<ActionResult<PantryItem>> UpdatePantryItem(int pantryItemId, [FromBody] PantryItemDto pantryItemDto)
+        public async Task<ActionResult<PantryItem>> UpdatePantryItem([FromBody] EditPantryItemRequest request)
         {
-            var pantryItem = new PantryItem
-            {
-                Id = pantryItemId,
-                ProductId = pantryItemDto.ProductId,
-                Quantity = pantryItemDto.Quantity,
-                UserId = pantryItemDto.UserId,
-                AddedAt = pantryItemDto.AddedAt,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var updated = await pantryService.UpdatePantryItemAsync(pantryItemId, pantryItem);
+            var updated = await pantryService.UpdatePantryItemAsync(request);
             if (updated == null) return NotFound();
             return Ok(updated.ToDto());
         }
@@ -55,14 +30,6 @@ namespace FoodSense.API.Controllers
         public async Task<IActionResult> DeletePantryItem(int pantryItemId)
         {
             var deleted = await pantryService.RemovePantryItemAsync(pantryItemId);
-            if (!deleted) return NotFound();
-            return NoContent();
-        }
-
-        [HttpDelete("product/{productId:int}/{pantryItemId:int}")]
-        public async Task<IActionResult> RemoveProductFromPantry(int productId, int pantryItemId)
-        {
-            var deleted = await pantryService.RemovePantryItemAsync(productId, pantryItemId);
             if (!deleted) return NotFound();
             return NoContent();
         }

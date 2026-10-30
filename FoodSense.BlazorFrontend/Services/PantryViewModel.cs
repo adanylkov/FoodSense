@@ -1,9 +1,9 @@
 namespace FoodSense.ViewModels;
 
+using FoodSense.BlazorFrontend.Services;
 using FoodSense.Common.Models;
-using FoodSense.Services;
 
-public class PantryViewModel(IProductApiService productApi, AlertService alerts) : ViewModelBase(alerts)
+public class PantryViewModel(IPantryService pantryApi, AlertService alerts) : ViewModelBase(alerts)
 {
     public ProductDto? ActiveProduct { get; private set; }
     public int? EditingItemId { get; private set; }
@@ -17,7 +17,7 @@ public class PantryViewModel(IProductApiService productApi, AlertService alerts)
     {
         await RunAsync(async () =>
         {
-            var response = await productApi.QuickAddPantryItemAsync(productId);
+            var response = await pantryApi.QuickAddPantryItemAsync(productId);
             if (!response.IsSuccessStatusCode)
             {
                 Alerts.Error = "Failed to add item to pantry.";
@@ -38,16 +38,9 @@ public class PantryViewModel(IProductApiService productApi, AlertService alerts)
 
         await RunAsync(async () =>
         {
-            var payload = new PantryItemDto
-            {
-                Id = EditingItemId ?? 0,
-                Quantity = Quantity,
-                AddedAt = DateTime.UtcNow
-            };
-
             var response = EditingItemId.HasValue
-                ? await productApi.UpdatePantryItemAsync(EditingItemId.Value, payload)
-                : await productApi.CreatePantryItemAsync(product.Id, payload);
+                ? await pantryApi.UpdatePantryItemAsync(new Common.Requests.EditPantryItemRequest { PantryItemId = EditingItemId.Value, Quantity = Quantity })
+                : await pantryApi.CreatePantryItemAsync(new Common.Requests.AddPantryItemRequest { ProductId = product.Id, Quantity = Quantity });
 
             if (!response.IsSuccessStatusCode)
             {
@@ -64,7 +57,7 @@ public class PantryViewModel(IProductApiService productApi, AlertService alerts)
     {
         await RunAsync(async () =>
         {
-            var response = await productApi.DeletePantryItemAsync(pantryItemId);
+            var response = await pantryApi.DeletePantryItemAsync(pantryItemId);
             if (!response.IsSuccessStatusCode)
             {
                 Alerts.Error = "Failed to delete pantry item.";

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using FoodSense.API.Data.ValueObjects;
 using FoodSense.Common.Models;
 
 namespace FoodSense.API.Data.Models;
@@ -10,9 +12,18 @@ public class FoodLogEntry
     public int ProductId { get; set; }
     public Product Product { get; set; } = null!;
     public MealType MealType { get; set; }
-    public decimal ConsumedQuantity { get; set; } 
-    public double Calories { get; set; }
-    public double Protein { get; set; }
-    public double Fat { get; set; }
-    public double Carbs { get; set; }
+    public required NutritionSnapshot Nutritions { get; init; }
+    public decimal ConsumedQuantity { get; set; }
+
+    private FoodLogEntry() { } // For EF Core
+
+    [SetsRequiredMembers]
+    public FoodLogEntry(Product product, MealType mealType, NutritionSnapshot nutritions, decimal consumedQuantity)
+    {
+        Product = product;
+        ProductId = product.Id;
+        MealType = mealType;
+        Nutritions = nutritions;
+        ConsumedQuantity = consumedQuantity;
+    }
 }

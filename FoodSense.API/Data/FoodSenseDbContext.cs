@@ -112,12 +112,8 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<FoodLogEntry>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.OwnsOne(e => e.Nutritions);
             entity.Property(e => e.ConsumedQuantity).HasPrecision(18, 2);
-            entity.Property(e => e.Calories).HasPrecision(18, 2);
-            entity.Property(e => e.Protein).HasPrecision(18, 2);
-            entity.Property(e => e.Fat).HasPrecision(18, 2);
-            entity.Property(e => e.Carbs).HasPrecision(18, 2);
-
             entity.HasOne(e => e.Product)
                 .WithMany()
                 .HasForeignKey(e => e.ProductId)

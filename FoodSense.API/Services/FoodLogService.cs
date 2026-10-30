@@ -2,30 +2,50 @@ using FoodSense.Common.Models;
 using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
 using Microsoft.EntityFrameworkCore;
+using FoodSense.Common.Requests;
 
 namespace FoodSense.API.Services;
 
-public class FoodLogService(FoodSenseDbContext context) : IFoodLogService
+public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> logger) : IFoodLogService
 {
+    public async Task<Result> EditConsumptionAsync(EditFoodLogRequest request)
+    {
+        var entry = context.FoodLogEntries.FirstOrDefault(e => e.Id == request.FoodLogEntryId);
+        if (entry is null)
+        {
+            logger.LogWarning("Food log entry with ID {FoodLogEntryId} not found.", request.FoodLogEntryId);
+            return Result.Failure("Food log entry not found.");
+        }
+
+        var product = context.Products
+            .Include(p => p.Nutrients)
+            .FirstOrDefault(p => p.Id == entry.ProductId);
+
+        if (product is null || product.Nutrients is null)
+        {
+            logger.LogWarning("Product with ID {ProductId} or its nutritional information not found.", entry.ProductId);
+            return Result.Failure("Product or its nutritional information not found.");
+        }
+
+
+        var newEntry = FoodLogEntryFactory.Create(product, request);
+
+        newEntry.Id = entry.Id;
+        newEntry.UserId = entry.UserId;
+        newEntry.Date = entry.Date;
+
+        context.FoodLogEntries.Update(entry);
+        await context.SaveChangesAsync();
+
+        return Result.Success();
+    }
+
     public async Task<IEnumerable<FoodLogEntry>> GetEntriesByDateAsync(DateTime date)
     {
         return await context.FoodLogEntries
             .AsNoTracking()
             .Include(e => e.Product)
             .Where(e => e.Date.Date == date.Date)
-            .Select(e => new FoodLogEntry
-            {
-                Id = e.Id,
-                ProductId = e.ProductId,
-                Product = e.Product,
-                MealType = e.MealType,
-                ConsumedQuantity = e.ConsumedQuantity,
-                Calories = e.Calories,
-                Protein = e.Protein,
-                Fat = e.Fat,
-                Carbs = e.Carbs,
-                Date = e.Date
-            })
             .ToListAsync();
     }
 
@@ -36,19 +56,20 @@ public class FoodLogService(FoodSenseDbContext context) : IFoodLogService
             .FirstOrDefaultAsync() ?? new UserNutritionalGoals();
     }
 
-    public async Task<Result> LogConsumptionAndReducePantryAsync(LogConsumptionRequest request)
+    public async Task<Result> LogConsumptionAndReducePantryAsync(AddFoodLogRequest request)
     {
         if (request.ProductId <= 0)
         {
+            logger.LogWarning("Invalid product ID: {ProductId}", request.ProductId);
             return Result.Failure("A valid product is required.");
         }
 
         if (request.Quantity <= 0)
         {
+            logger.LogWarning("Invalid quantity: {Quantity}", request.Quantity);
             return Result.Failure("Quantity must be greater than zero.");
         }
 
-        // Pobieramy strategię wykonawczą zgodną z konfiguracją SQL Server (retrying strategy)
         var strategy = context.Database.CreateExecutionStrategy();
 
         return await strategy.ExecuteAsync(async () =>
@@ -56,64 +77,25 @@ public class FoodLogService(FoodSenseDbContext context) : IFoodLogService
             using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Pobierz produkt wraz z jego wartościami odżywczymi
                 var product = await context.Products
                     .Include(p => p.Nutrients)
                     .FirstOrDefaultAsync(p => p.Id == request.ProductId);
 
-                if (product == null)
+                if (product is null)
                 {
+                    logger.LogWarning("Product with ID {ProductId} not found.", request.ProductId);
                     return Result.Failure("Product not found.");
                 }
 
-                if (product.Nutrients == null)
+                if (product.Nutrients is null)
                 {
+                    logger.LogWarning("Nutritional information for product ID {ProductId} is missing.", request.ProductId);
                     return Result.Failure("Product nutritional information is missing.");
                 }
 
-                // 2. Przelicz makroskładniki proporcjonalnie do zjedzonej ilości
-                var ratio = (double)(request.Quantity / 100);
-                
-                var calories = product.Nutrients.EnergyKcal * ratio;
-                var protein = product.Nutrients.Proteins * ratio;
-                var fat = product.Nutrients.Fat * ratio;
-                var carbs = product.Nutrients.Carbohydrates * ratio;
-
-                // 3. Utwórz wpis w dzienniku kalorii
-                var logEntry = new FoodLogEntry
-                {
-                    ProductId = request.ProductId,
-                    ConsumedQuantity = request.Quantity,
-                    Date = DateTime.UtcNow.Date,
-                    MealType = request.MealType,
-                    Calories = calories,
-                    Protein = protein,
-                    Fat = fat,
-                    Carbs = carbs
-                };
+                var logEntry = FoodLogEntryFactory.Create(product, request);
 
                 await context.FoodLogEntries.AddAsync(logEntry);
-
-                // 4. Integracja ze spiżarnią – pomniejsz stan magazynowy
-                PantryItem? pantryItem = null;
-
-                if (request.PantryItemId.HasValue)
-                {
-                    pantryItem = await context.PantryItems.FindAsync(request.PantryItemId.Value);
-                }
-                else
-                {
-                    pantryItem = await context.PantryItems
-                        .Where(pi => pi.ProductId == request.ProductId && pi.Quantity > 0)
-                        .OrderBy(pi => pi.Id)
-                        .FirstOrDefaultAsync();
-                }
-
-                if (pantryItem != null)
-                {
-                    pantryItem.Quantity = Math.Max(0, pantryItem.Quantity - request.Quantity);
-                    context.PantryItems.Update(pantryItem);
-                }
 
                 // 5. Zapisz zmiany i zatwierdź transakcję
                 await context.SaveChangesAsync();
@@ -123,6 +105,7 @@ public class FoodLogService(FoodSenseDbContext context) : IFoodLogService
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "An error occurred while logging consumption and reducing pantry.");
                 await transaction.RollbackAsync();
                 return Result.Failure($"An error occurred while logging consumption: {ex.Message}");
             }

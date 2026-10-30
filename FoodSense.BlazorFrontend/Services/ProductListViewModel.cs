@@ -1,7 +1,7 @@
 namespace FoodSense.ViewModels;
 
+using FoodSense.BlazorFrontend.Services;
 using FoodSense.Common.Models;
-using FoodSense.Services;
 
 public class ProductListViewModel : ViewModelBase, IDisposable
 {

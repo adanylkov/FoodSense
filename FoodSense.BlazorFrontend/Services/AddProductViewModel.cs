@@ -2,7 +2,6 @@ namespace FoodSense.BlazorFrontend.ViewModels;
 
 using FoodSense.Common.Models;
 using FoodSense.ViewModels;
-using FoodSense.Services;
 using FoodSense.BlazorFrontend.Services;
 
 public class AddProductModalViewModel : ViewModelBase
@@ -132,10 +131,12 @@ public class AddProductModalViewModel : ViewModelBase
             foreach (var item in SelectedItems)
             {
                 var response = await _calorieTrackerApi.LogAndConsumeAsync(
-                    productId: item.Product.Id,
-                    quantity: item.Quantity,
-                    pantryItemId: null,
-                    mealType: CurrentMealType
+                    new Common.Requests.AddFoodLogRequest
+                    {
+                        ProductId = item.Product.Id,
+                        Quantity = item.Quantity,
+                        MealType = CurrentMealType
+                    }
                 );
 
                 if (!response.IsSuccessStatusCode)

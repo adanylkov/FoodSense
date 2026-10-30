@@ -120,7 +120,8 @@ public class ReceiptUploaderViewModelTests
         return new ReceiptUploaderViewModel(
             Mock.Of<IReceiptReaderFactory>(),
             matchApiService.Object,
-            Mock.Of<IProductApiService>());
+            Mock.Of<IProductApiService>(),
+            Mock.Of<IPantryService>());
     }
 
     private static ReceiptPreviewItem CreateItem(string name, bool isSelected = true)

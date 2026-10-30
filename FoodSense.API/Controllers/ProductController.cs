@@ -7,7 +7,7 @@ namespace FoodSense.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class FoodController(IProductService productService) : ControllerBase
+    public class ProductController(IProductService productService) : ControllerBase
     {
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<Product>>>> GetProducts(

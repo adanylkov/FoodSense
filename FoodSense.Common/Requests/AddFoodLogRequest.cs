@@ -1,6 +1,8 @@
-namespace FoodSense.Common.Models;
+using FoodSense.Common.Models;
 
-public record LogConsumptionRequest
+namespace FoodSense.Common.Requests;
+
+public record AddFoodLogRequest
 {
     public int ProductId { get; set; }
     public decimal Quantity { get; set; }

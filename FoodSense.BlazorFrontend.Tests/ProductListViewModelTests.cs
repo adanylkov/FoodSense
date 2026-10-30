@@ -1,6 +1,6 @@
 using FluentAssertions;
+using FoodSense.BlazorFrontend.Services;
 using FoodSense.Common.Models;
-using FoodSense.Services;
 using FoodSense.ViewModels;
 using Moq;
 using System.Net;
@@ -9,7 +9,8 @@ namespace FoodSense.BlazorFrontend.Tests;
 
 public class ProductListViewModelTests : IDisposable
 {
-    private readonly Mock<IProductApiService> _api = new();
+    private readonly Mock<IProductApiService> _productApi = new();
+    private readonly Mock<IPantryService> _pantryApi = new();
     private readonly AlertService _alerts = new();
     private readonly PantryViewModel _pantry;
     private readonly ProductFormViewModel _form;
@@ -18,11 +19,11 @@ public class ProductListViewModelTests : IDisposable
 
     public ProductListViewModelTests()
     {
-        _pantry = new PantryViewModel(_api.Object, _alerts);
-        _form = new ProductFormViewModel(_api.Object, _alerts);
-        _deletion = new ProductDeletionViewModel(_api.Object, _alerts);
+        _pantry = new PantryViewModel(_pantryApi.Object, _alerts);
+        _form = new ProductFormViewModel(_productApi.Object, _alerts);
+        _deletion = new ProductDeletionViewModel(_productApi.Object, _alerts);
         _viewModel = new ProductListViewModel(
-            _api.Object,
+            _productApi.Object,
             _pantry,
             _form,
             _deletion,
@@ -42,7 +43,7 @@ public class ProductListViewModelTests : IDisposable
         await RaisePublisherEventAsync(publisher);
 
         _viewModel.Products.Select(p => p.Id).Should().Equal(1);
-        _api.Verify(a => a.GetProductsAsync(1, _viewModel.Pagination.PageSize, false), Times.Once);
+        _productApi.Verify(a => a.GetProductsAsync(1, _viewModel.Pagination.PageSize, false), Times.Once);
     }
 
     [Theory]
@@ -56,7 +57,7 @@ public class ProductListViewModelTests : IDisposable
 
         await RaisePublisherEventAsync(publisher);
 
-        _api.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
+        _productApi.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Theory]
@@ -66,14 +67,14 @@ public class ProductListViewModelTests : IDisposable
     public async Task PublisherEvent_AfterReplacement_ReloadsOnlyReplacement(string publisher)
     {
         _viewModel.Dispose();
-        using var replacement = new ProductListViewModel(_api.Object, _pantry, _form, _deletion, _alerts);
+        using var replacement = new ProductListViewModel(_productApi.Object, _pantry, _form, _deletion, _alerts);
         SetupProducts(page: 1, pantryOnly: false, totalCount: 1, CreateProduct(1));
 
         await RaisePublisherEventAsync(publisher);
 
         _viewModel.Products.Should().BeEmpty();
         replacement.Products.Select(p => p.Id).Should().Equal(1);
-        _api.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Once);
+        _productApi.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Once);
     }
 
     [Fact]
@@ -82,15 +83,15 @@ public class ProductListViewModelTests : IDisposable
         SetupProducts(page: 3, pantryOnly: false, totalCount: 40, CreateProduct(1));
         SetupProducts(page: 1, pantryOnly: true, totalCount: 5, CreateProduct(2));
         await _viewModel.LoadAsync(3);
-        _api.Invocations.Clear();
+        _productApi.Invocations.Clear();
 
         await _viewModel.SetPantryOnlyAsync(true);
 
         _viewModel.PantryOnly.Should().BeTrue();
         _viewModel.Pagination.CurrentPage.Should().Be(1);
         _viewModel.Products.Select(p => p.Id).Should().Equal(2);
-        _api.Verify(a => a.GetProductsAsync(1, _viewModel.Pagination.PageSize, true), Times.Once);
-        _api.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Once);
+        _productApi.Verify(a => a.GetProductsAsync(1, _viewModel.Pagination.PageSize, true), Times.Once);
+        _productApi.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Once);
     }
 
     [Fact]
@@ -98,7 +99,7 @@ public class ProductListViewModelTests : IDisposable
     {
         await _viewModel.SetPantryOnlyAsync(false);
 
-        _api.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
+        _productApi.Verify(a => a.GetProductsAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class ProductListViewModelTests : IDisposable
     {
         SetupProducts(page: 1, pantryOnly: false, totalCount: 1, CreateProduct(1));
         await _viewModel.LoadAsync(1);
-        _api.Setup(a => a.GetProductsAsync(1, It.IsAny<int>(), false))
+        _productApi.Setup(a => a.GetProductsAsync(1, It.IsAny<int>(), false))
             .ReturnsAsync(new ApiResponse<IEnumerable<ProductDto>> { Data = null, TotalCount = 0 });
 
         await _viewModel.LoadAsync(1);
@@ -157,7 +158,7 @@ public class ProductListViewModelTests : IDisposable
     {
         SetupProducts(page: 1, pantryOnly: false, totalCount: 1, CreateProduct(1));
         await _viewModel.LoadAsync(1);
-        _api.Setup(a => a.GetProductsAsync(2, It.IsAny<int>(), false))
+        _productApi.Setup(a => a.GetProductsAsync(2, It.IsAny<int>(), false))
             .ReturnsAsync((ApiResponse<IEnumerable<ProductDto>>?)null);
 
         await _viewModel.LoadAsync(2);
@@ -195,17 +196,17 @@ public class ProductListViewModelTests : IDisposable
         switch (publisher)
         {
             case "pantry":
-                _api.Setup(a => a.QuickAddPantryItemAsync(1))
+                _pantryApi.Setup(a => a.QuickAddPantryItemAsync(1))
                     .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
                 await _pantry.QuickAddAsync(1);
                 break;
             case "form":
-                _api.Setup(a => a.CreateProductAsync(It.IsAny<ProductDto>()))
+                _productApi.Setup(a => a.CreateProductAsync(It.IsAny<ProductDto>()))
                     .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
                 await _form.SaveAsync();
                 break;
             case "deletion":
-                _api.Setup(a => a.DeleteProductAsync(1))
+                _productApi.Setup(a => a.DeleteProductAsync(1))
                     .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
                 _deletion.Prompt(1);
                 await _deletion.ExecuteAsync();
@@ -216,7 +217,7 @@ public class ProductListViewModelTests : IDisposable
     }
 
     private void SetupProducts(int page, bool pantryOnly, int totalCount, params ProductDto[] products) =>
-        _api.Setup(a => a.GetProductsAsync(page, It.IsAny<int>(), pantryOnly))
+        _productApi.Setup(a => a.GetProductsAsync(page, It.IsAny<int>(), pantryOnly))
             .ReturnsAsync(new ApiResponse<IEnumerable<ProductDto>> { Data = products, TotalCount = totalCount });
 
     private static ProductDto CreateProduct(int id, string name = "Product") =>

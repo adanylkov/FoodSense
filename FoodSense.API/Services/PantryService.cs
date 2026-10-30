@@ -1,15 +1,22 @@
 using FoodSense.API.Data.Models;
 using FoodSense.API.Repositories;
 using FoodSense.Common.Models;
+using FoodSense.Common.Requests;
 
 namespace FoodSense.API.Services;
 
-public class PantryService(IPantryRepository pantryRepository) : IPantryService
+public class PantryService(IPantryRepository pantryRepository, IProductRepository productRepository, ILogger<PantryService> logger) : IPantryService
 {
-    public async Task<PantryItem> AddPantryItemAsync(int productId, PantryItem pantryItem)
+    public async Task<PantryItem> AddPantryItemAsync(AddPantryItemRequest request)
     {
-        pantryItem.ProductId = productId;
-        pantryItem.UserId = null; 
+        var product = await productRepository.GetByIdAsync(request.ProductId);
+        if (product is null)
+        {
+            throw new ArgumentException($"Product with ID {request.ProductId} does not exist.");
+        }
+
+        var pantryItem = new PantryItem(product, request.Quantity);
+
         return await pantryRepository.AddAsync(pantryItem);
     }
 
@@ -20,46 +27,34 @@ public class PantryService(IPantryRepository pantryRepository) : IPantryService
         return await pantryRepository.AddAsync(pantryItem);
     }
 
-    public async Task<PantryItem?> UpdatePantryItemAsync(int pantryItemId, PantryItem pantryItem)
+    public async Task<PantryItem?> UpdatePantryItemAsync(EditPantryItemRequest request)
     {
-        pantryItem.Id = pantryItemId;
-        var success = await pantryRepository.UpdateAsync(pantryItem);
-        return success ? pantryItem : null;
-    }
+        var pantryItem = await pantryRepository.GetByIdAsync(request.PantryItemId);
+        if (pantryItem is null)
+        {
+            logger.LogWarning($"Pantry item with ID {request.PantryItemId} does not exist.");
+            return null;
+        }
 
-    public async Task<PantryItem?> UpdatePantryItemAsync(int productId, int pantryItemId, PantryItem pantryItem)
-    {
-        var existing = await pantryRepository.GetByIdAsync(pantryItemId);
-        if (existing == null || existing.ProductId != productId) return null;
+        var product = await productRepository.GetByIdAsync(pantryItem.ProductId);
+        if (product is null)
+        {
+            logger.LogWarning($"Product with ID {pantryItem.ProductId} does not exist.");
+            return null;
+        }
 
-        pantryItem.Id = pantryItemId;
-        pantryItem.ProductId = productId;
-        var success = await pantryRepository.UpdateAsync(pantryItem);
+        var updatedPantryItem = new PantryItem(product, request.Quantity)
+        {
+            AddedAt = pantryItem.AddedAt,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var success = await pantryRepository.UpdateAsync(updatedPantryItem);
         return success ? pantryItem : null;
     }
 
     public async Task<bool> RemovePantryItemAsync(int pantryItemId)
     {
         return await pantryRepository.DeleteAsync(pantryItemId);
-    }
-
-    public async Task<bool> RemovePantryItemAsync(int productId, int pantryItemId)
-    {
-        var item = await pantryRepository.GetByIdAsync(pantryItemId);
-        if (item == null || item.ProductId != productId) return false;
-
-        return await pantryRepository.DeleteAsync(pantryItemId);
-    }
-
-    public Task<PantryItem> AddOnePantryItemAsync(int productId)
-    {
-        var pantryItem = new PantryItem
-        {
-            ProductId = productId,
-            Quantity = 1,
-            UserId = null
-        };
-
-        return pantryRepository.AddAsync(pantryItem);
     }
 }

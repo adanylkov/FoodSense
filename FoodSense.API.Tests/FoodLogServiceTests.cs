@@ -1,10 +1,13 @@
 using FluentAssertions;
 using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
+using FoodSense.API.Data.ValueObjects;
 using FoodSense.API.Services;
 using FoodSense.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace FoodSense.API.Tests;
 
@@ -14,9 +17,10 @@ public class FoodLogServiceTests
     public async Task LogConsumptionAndReducePantryAsync_ShouldRejectInvalidProductId()
     {
         await using var context = CreateContext();
-        var service = new FoodLogService(context);
+        var logger = new Mock<ILogger<FoodLogService>>().Object;
+        var service = new FoodLogService(context , logger);
 
-        var result = await service.LogConsumptionAndReducePantryAsync(new LogConsumptionRequest
+        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = 0,
             Quantity = 100
@@ -33,9 +37,10 @@ public class FoodLogServiceTests
     public async Task LogConsumptionAndReducePantryAsync_ShouldRejectNonPositiveQuantity(decimal quantity)
     {
         await using var context = CreateContext();
-        var service = new FoodLogService(context);
+        var logger = new Mock<ILogger<FoodLogService>>().Object;
+        var service = new FoodLogService(context , logger);
 
-        var result = await service.LogConsumptionAndReducePantryAsync(new LogConsumptionRequest
+        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = 1,
             Quantity = quantity
@@ -52,21 +57,22 @@ public class FoodLogServiceTests
         await using var context = CreateContext();
         var product = new Product
         {
-            ProductName = "Test product",
+            Name = "Test product",
             Nutrients = new Nutrients
             {
-                EnergyKcal = 250,
+                Kcal = 250,
                 Proteins = 10,
                 Fat = 8,
                 Carbohydrates = 30
             }
         };
-        product.PantryItems.Add(new PantryItem { Quantity = 500 });
+        product.PantryItems.Add(new PantryItem(product, 500));
         context.Products.Add(product);
         await context.SaveChangesAsync();
 
-        var service = new FoodLogService(context);
-        var result = await service.LogConsumptionAndReducePantryAsync(new LogConsumptionRequest
+        var logger = new Mock<ILogger<FoodLogService>>().Object;
+        var service = new FoodLogService(context , logger);
+        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = product.Id,
             Quantity = 200,
@@ -79,10 +85,10 @@ public class FoodLogServiceTests
         logEntry.ProductId.Should().Be(product.Id);
         logEntry.ConsumedQuantity.Should().Be(200);
         logEntry.MealType.Should().Be(MealType.Dinner);
-        logEntry.Calories.Should().Be(500);
-        logEntry.Protein.Should().Be(20);
-        logEntry.Fat.Should().Be(16);
-        logEntry.Carbs.Should().Be(60);
+        logEntry.Nutritions.Calories.Should().Be(500);
+        logEntry.Nutritions.Protein.Should().Be(20);
+        logEntry.Nutritions.Fat.Should().Be(16);
+        logEntry.Nutritions.Carbs.Should().Be(60);
 
         var pantryItem = await context.PantryItems.SingleAsync();
         pantryItem.Quantity.Should().Be(300);

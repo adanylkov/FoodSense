@@ -11,12 +11,12 @@ public static class ProductDtoExtensions
         {
             Id = product.Id,
             Barcode = product.Barcode,
-            ProductName = product.ProductName,
+            ProductName = product.Name,
             CategoryId = product.CategoryId,
             FrontImageUrl = product.FrontImageUrl,
             Nutrients = new NutrientsDto
             {
-                EnergyKcal = product.Nutrients.EnergyKcal,
+                EnergyKcal = product.Nutrients.Kcal,
                 Fat = product.Nutrients.Fat,
                 SaturatedFat = product.Nutrients.SaturatedFat,
                 Carbohydrates = product.Nutrients.Carbohydrates,

@@ -27,28 +27,28 @@
             <div class="col-md-3">
                 <div class="card p-3 shadow-sm rounded-4 border-0">
                     <span class="text-secondary small">Kalorie</span>
-                    <h3 class="fw-bold mb-0">@VM.TotalCalories.ToString("N0") <span class="fs-6 text-muted">/
+                    <h3 class="fw-bold mb-0">@VM.TotalNutrients.Calories.ToString("N0") <span class="fs-6 text-muted">/
                         @VM.Goals.TargetCalories kcal</span></h3>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card p-3 shadow-sm rounded-4 border-0">
                         <span class="text-secondary small">Białko</span>
-                        <h4 class="fw-bold mb-0">@VM.TotalProtein.ToString("N1") <span class="fs-6 text-muted">/
+                        <h4 class="fw-bold mb-0">@VM.TotalNutrients.Protein.ToString("N1") <span class="fs-6 text-muted">/
                             @VM.Goals.TargetProtein g</span></h4>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card p-3 shadow-sm rounded-4 border-0">
                             <span class="text-secondary small">Tłuszcz</span>
-                            <h4 class="fw-bold mb-0">@VM.TotalFat.ToString("N1") <span class="fs-6 text-muted">/ @VM.Goals.TargetFat
+                            <h4 class="fw-bold mb-0">@VM.TotalNutrients.Fat.ToString("N1") <span class="fs-6 text-muted">/ @VM.Goals.TargetFat
                                 g</span></h4>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card p-3 shadow-sm rounded-4 border-0">
                                 <span class="text-secondary small">Węglowodany</span>
-                                <h4 class="fw-bold mb-0">@VM.TotalCarbs.ToString("N1") <span class="fs-6 text-muted">/
+                                <h4 class="fw-bold mb-0">@VM.TotalNutrients.Carbs.ToString("N1") <span class="fs-6 text-muted">/
                                     @VM.Goals.TargetCarbs g</span></h4>
                                 </div>
                             </div>
@@ -83,13 +83,13 @@
                                             {
                                                 <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                     <div>
-                                                        <span class="fw-semibold">@entry.Product.ProductName</span>
-                                                        <span class="text-muted small ms-2">(@entry.ConsumedQuantity g/ml)</span>
+                                                        <span class="fw-semibold">@entry.Product.Name</span>
+                                                        <span class="text-muted small ms-2">@entry.ConsumedQuantity.ToString("N0")g</span>
                                                     </div>
                                                     <div>
-                                                        <span class="badge bg-light text-dark border me-2">@entry.Calories.ToString("N0") kcal</span>
-                                                        <span class="text-muted small">B: @entry.Protein.ToString("N0")g | T: @entry.Fat.ToString("N0")g
-                                                            | W: @entry.Carbs.ToString("N0")g</span>
+                                                        <span class="badge bg-light text-dark border me-2">@entry.Nutritions.Calories.ToString("N0") kcal</span>
+                                                        <span class="text-muted small">B: @entry.Nutritions.Protein.ToString("N0")g | T: @entry.Nutritions.Fat.ToString("N0")g
+                                                            | W: @entry.Nutritions.Carbs.ToString("N0")g</span>
                                                         </div>
                                                     </li>
                                                 }

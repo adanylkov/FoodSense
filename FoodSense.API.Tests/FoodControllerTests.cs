@@ -2,6 +2,7 @@ using FluentAssertions;
 using FoodSense.API.Controllers;
 using FoodSense.API.Data;
 using FoodSense.API.Data.Models;
+using FoodSense.API.Data.ValueObjects;
 using FoodSense.API.Repositories;
 using FoodSense.API.Services;
 using FoodSense.Common.Models;
@@ -28,7 +29,7 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page: 2, pageSize: 25);
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -44,24 +45,17 @@ public class FoodControllerTests
     public async Task GetProducts_WithPantryFilter_ShouldReturnOnlyProductsInStock()
     {
         await using var context = CreateContext();
-        context.Products.AddRange(
-            new Product
-            {
-                Barcode = "1",
-                PantryItems = new List<PantryItem> { new() { Quantity = 2 } }
-            },
-            new Product
-            {
-                Barcode = "2",
-                PantryItems = new List<PantryItem> { new() { Quantity = 0 } }
-            },
-            new Product { Barcode = "3" });
+        var productInStock = new Product { Barcode = "1" };
+        productInStock.PantryItems = new List<PantryItem> { new(productInStock, 2) };
+        var productOutOfStock = new Product { Barcode = "2" };
+        productOutOfStock.PantryItems = new List<PantryItem> { new(productOutOfStock, 0) };
+        context.Products.AddRange(productInStock, productOutOfStock, new Product { Barcode = "3" });
         await context.SaveChangesAsync();
 
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page: 1, pageSize: 25, hasPantryItems: true);
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -81,7 +75,7 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page, pageSize);
 
@@ -99,13 +93,13 @@ public class FoodControllerTests
 
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, opfClientMock.Object, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
 
         var createdProduct = new Product { Barcode = "5901234567890" };
         var result = await controller.CreateProduct(createdProduct);
 
         var createdAt = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
-        createdAt.ActionName.Should().Be(nameof(FoodController.GetProductById));
+        createdAt.ActionName.Should().Be(nameof(ProductController.GetProductById));
         context.Products.Should().ContainSingle(p => p.Barcode == "5901234567890");
     }
 
@@ -119,7 +113,7 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
         var result = await controller.CreateProduct(new Product { Barcode = "111" });
 
         result.Result.Should().BeOfType<ConflictObjectResult>();
@@ -136,7 +130,7 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
         var updated = new Product { Barcode = "222" };
 
         var result = await controller.UpdateProduct(existing.Id, updated);
@@ -154,7 +148,7 @@ public class FoodControllerTests
         var existing = new Product
         {
             Barcode = "111",
-            Nutrients = new Nutrients { EnergyKcal = 100, Fat = 1 }
+            Nutrients = new Nutrients { Kcal = 100, Fat = 1 }
         };
         context.Products.Add(existing);
         await context.SaveChangesAsync();
@@ -162,11 +156,11 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
         var updated = new Product
         {
             Barcode = "222",
-            Nutrients = new Nutrients { EnergyKcal = 250, Fat = 5, SaturatedFat = 2, Carbohydrates = 30, Sugars = 10, Proteins = 12, Salt = 1.5 }
+            Nutrients = new Nutrients { Kcal = 250, Fat = 5, SaturatedFat = 2, Carbohydrates = 30, Sugars = 10, Proteins = 12, Salt = 1.5 }
         };
 
         var result = await controller.UpdateProduct(existing.Id, updated);
@@ -175,7 +169,7 @@ public class FoodControllerTests
         var dbProduct = await context.Products.FindAsync(existing.Id);
         dbProduct.Should().NotBeNull();
         dbProduct!.Barcode.Should().Be("222");
-        dbProduct.Nutrients.EnergyKcal.Should().Be(250);
+        dbProduct.Nutrients.Kcal.Should().Be(250);
         dbProduct.Nutrients.Fat.Should().Be(5);
         dbProduct.Nutrients.Salt.Should().Be(1.5);
     }
@@ -191,7 +185,7 @@ public class FoodControllerTests
         var productRepository = new ProductRepository(context);
         var productMappingRepository = new ProductMappingRepository(context);
         var productService = new ProductService(productRepository, null!, productMappingRepository);
-        var controller = new FoodController(productService);
+        var controller = new ProductController(productService);
         var result = await controller.DeleteProduct(existing.Id);
 
         result.Should().BeOfType<NoContentResult>();

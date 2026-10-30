@@ -1,19 +1,14 @@
-using System.Net.Http.Json;
 using FoodSense.Common.Models;
 
-namespace FoodSense.Services;
+namespace FoodSense.BlazorFrontend.Services;
 
 public interface IProductApiService
 {
-    Task<HttpResponseMessage> CreatePantryItemAsync(int productId, PantryItemDto pantryItem);
     Task<HttpResponseMessage> CreateProductAsync(ProductDto product);
-    Task<HttpResponseMessage> DeletePantryItemAsync(int pantryItemId);
     Task<HttpResponseMessage> DeleteProductAsync(int id);
     Task<ProductDto?> GetProductByBarcodeAsync(string barcode);
     Task<ProductDto?> GetProductByIdAsync(int id);
     Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false);
-    Task<HttpResponseMessage> QuickAddPantryItemAsync(int productId);
-    Task<HttpResponseMessage> UpdatePantryItemAsync(int pantryItemId, PantryItemDto pantryItem);
     Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product);
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync();
     Task<ProductDto?> GetProductByNameAsync(string productName);
@@ -32,27 +27,27 @@ public class ProductApiService : IProductApiService
     public async Task<ApiResponse<IEnumerable<ProductDto>>?> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false)
     {
         return await _http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductDto>>>(
-            $"api/Food/GetProducts?page={page}&pageSize={pageSize}&hasPantryItems={hasPantryItems}");
+            $"api/Product/GetProducts?page={page}&pageSize={pageSize}&hasPantryItems={hasPantryItems}");
     }
 
     public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode)
     {
-        return await _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProduct/{Uri.EscapeDataString(barcode)}");
+        return await _http.GetFromJsonAsync<ProductDto>($"api/Product/GetProduct/{Uri.EscapeDataString(barcode)}");
     }
 
     public async Task<ProductDto?> GetProductByIdAsync(int id)
     {
-        return await _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProductById/{id}");
+        return await _http.GetFromJsonAsync<ProductDto>($"api/Product/GetProductById/{id}");
     }
 
     public async Task<HttpResponseMessage> CreateProductAsync(ProductDto product)
     {
-        return await _http.PostAsJsonAsync("api/Food/CreateProduct", product);
+        return await _http.PostAsJsonAsync("api/Product/CreateProduct", product);
     }
 
     public async Task<HttpResponseMessage> UpdateProductAsync(int id, ProductDto product)
     {
-        return await _http.PutAsJsonAsync($"api/Food/UpdateProduct/{id}", product);
+        return await _http.PutAsJsonAsync($"api/Product/UpdateProduct/{id}", product);
     }
 
     public async Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync()
@@ -63,36 +58,17 @@ public class ProductApiService : IProductApiService
 
     public async Task<HttpResponseMessage> DeleteProductAsync(int id)
     {
-        return await _http.DeleteAsync($"api/Food/DeleteProduct/{id}");
+        return await _http.DeleteAsync($"api/Product/DeleteProduct/{id}");
     }
 
-    public async Task<HttpResponseMessage> QuickAddPantryItemAsync(int productId)
-    {
-        return await _http.PostAsync($"api/Pantry/AddProductToPantry/{productId}", null);
-    }
-
-    public async Task<HttpResponseMessage> CreatePantryItemAsync(int productId, PantryItemDto pantryItem)
-    {
-        return await _http.PostAsJsonAsync($"api/Pantry/CreatePantryItem?productId={productId}", pantryItem);
-    }
-
-    public async Task<HttpResponseMessage> UpdatePantryItemAsync(int pantryItemId, PantryItemDto pantryItem)
-    {
-        return await _http.PutAsJsonAsync($"api/Pantry/UpdatePantryItem/{pantryItemId}", pantryItem);
-    }
-
-    public async Task<HttpResponseMessage> DeletePantryItemAsync(int pantryItemId)
-    {
-        return await _http.DeleteAsync($"api/Pantry/DeletePantryItem/{pantryItemId}");
-    }
 
     public Task<ProductDto?> GetProductByNameAsync(string productName)
     {
-        return _http.GetFromJsonAsync<ProductDto>($"api/Food/GetProductByName/{Uri.EscapeDataString(productName)}");
+        return _http.GetFromJsonAsync<ProductDto>($"api/Product/GetProductByName/{Uri.EscapeDataString(productName)}");
     }
 
     public async Task<IEnumerable<ProductDto>?> GetProductsByNameAsync(string productName)
     {
-        return await _http.GetFromJsonAsync<IEnumerable<ProductDto>>($"api/Food/GetProductsByName/{Uri.EscapeDataString(productName)}");
+        return await _http.GetFromJsonAsync<IEnumerable<ProductDto>>($"api/Product/GetProductsByName/{Uri.EscapeDataString(productName)}");
     }
 }

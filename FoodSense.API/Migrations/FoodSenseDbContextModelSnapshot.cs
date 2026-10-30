@@ -98,14 +98,6 @@ namespace FoodSense.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<double>("Calories")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("float(18)");
-
-                    b.Property<double>("Carbs")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("float(18)");
-
                     b.Property<decimal>("ConsumedQuantity")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -113,19 +105,11 @@ namespace FoodSense.API.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("Fat")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("float(18)");
-
                     b.Property<int>("MealType")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
-
-                    b.Property<double>("Protein")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("float(18)");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -188,7 +172,7 @@ namespace FoodSense.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProductName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -278,6 +262,34 @@ namespace FoodSense.API.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.OwnsOne("FoodSense.API.Data.ValueObjects.NutritionSnapshot", "Nutritions", b1 =>
+                        {
+                            b1.Property<int>("FoodLogEntryId")
+                                .HasColumnType("int");
+
+                            b1.Property<double>("Calories")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Carbs")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Fat")
+                                .HasColumnType("float");
+
+                            b1.Property<double>("Protein")
+                                .HasColumnType("float");
+
+                            b1.HasKey("FoodLogEntryId");
+
+                            b1.ToTable("FoodLogEntries");
+
+                            b1.WithOwner()
+                                .HasForeignKey("FoodLogEntryId");
+                        });
+
+                    b.Navigation("Nutritions")
+                        .IsRequired();
+
                     b.Navigation("Product");
                 });
 
@@ -299,7 +311,7 @@ namespace FoodSense.API.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.OwnsOne("FoodSense.API.Data.Models.Nutrients", "Nutrients", b1 =>
+                    b.OwnsOne("FoodSense.API.Data.ValueObjects.Nutrients", "Nutrients", b1 =>
                         {
                             b1.Property<int>("ProductId")
                                 .HasColumnType("int");
@@ -307,10 +319,10 @@ namespace FoodSense.API.Migrations
                             b1.Property<double>("Carbohydrates")
                                 .HasColumnType("float");
 
-                            b1.Property<double>("EnergyKcal")
+                            b1.Property<double>("Fat")
                                 .HasColumnType("float");
 
-                            b1.Property<double>("Fat")
+                            b1.Property<double>("Kcal")
                                 .HasColumnType("float");
 
                             b1.Property<double>("Proteins")

@@ -1,29 +1,16 @@
-using System;
 using System.Diagnostics;
 using FoodSense.BlazorFrontend.Core;
 using FoodSense.Common.Models;
 using FoodSense.ReceiptReader;
 using FoodSense.Services;
-using Microsoft.AspNetCore.Components;
 
 namespace FoodSense.BlazorFrontend.Services;
 
-public class ReceiptUploaderViewModel
+public class ReceiptUploaderViewModel(IReceiptReaderFactory receiptReaderFactory, IMatchApiService matchApiService, IProductApiService productApiService, IPantryService pantryService)
 {
-    private readonly IReceiptReaderFactory _receiptReaderFactory;
-    private readonly IMatchApiService _matchApiService;
-    private readonly IProductApiService _productApiService;
-
-    public ReceiptUploaderViewModel(IReceiptReaderFactory receiptReaderFactory, IMatchApiService matchApiService, IProductApiService productApiService)
-    {
-        _receiptReaderFactory = receiptReaderFactory;
-        _matchApiService = matchApiService;
-        _productApiService = productApiService;
-    }
-
     public async Task<List<ReceiptPreviewItem>> ReadReceiptItems(Stream stream, string fileName)
     {
-        var reader = _receiptReaderFactory.GetReader(Path.GetExtension(fileName));
+        var reader = receiptReaderFactory.GetReader(Path.GetExtension(fileName));
         var items = await reader.ReadAsync(stream);
         var receiptPreviewItems = items
             .Select(item => new ReceiptPreviewItem { Item = item, IsSelected = true })
@@ -42,7 +29,7 @@ public class ReceiptUploaderViewModel
 
             if (names.Count > 0)
             {
-                ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts = await _matchApiService.MatchProductsAsync(names);
+                ApiResponse<IEnumerable<ProductMappingDto>>? matchedProducts = await matchApiService.MatchProductsAsync(names);
                 if (matchedProducts is not null)
                 {
                     foreach (var (i, item) in matchedProducts.Data?.Index() ?? [])
@@ -85,7 +72,7 @@ public class ReceiptUploaderViewModel
 
         try
         {
-            if (await _matchApiService.AddProductMappingAsync(productMapping) is false)
+            if (await matchApiService.AddProductMappingAsync(productMapping) is false)
             {
                 return Result.Failure($"Failed to add product mapping for {item.Item.Name}.");
             }
@@ -116,14 +103,15 @@ public class ReceiptUploaderViewModel
             try
             {
                 var product = receiptItem.ProductIdCandidate.HasValue
-                    ? await _productApiService.GetProductByIdAsync(receiptItem.ProductIdCandidate.Value)
+                    ? await productApiService.GetProductByIdAsync(receiptItem.ProductIdCandidate.Value)
                     : null;
                 if (product is not null)
                 {
 
-                    await _productApiService.CreatePantryItemAsync(product.Id, new PantryItemDto {
+                    await pantryService.CreatePantryItemAsync(new Common.Requests.AddPantryItemRequest
+                    {
                         ProductId = product.Id,
-                        Quantity = receiptItem.Item.Quantity,
+                        Quantity = receiptItem.Item.Quantity
                     });
                 }
                 else
@@ -152,7 +140,7 @@ public class ReceiptUploaderViewModel
         {
             item.BarcodeCandidate = barcode;
             try {
-                var product = await _productApiService.GetProductByBarcodeAsync(barcode);
+                var product = await productApiService.GetProductByBarcodeAsync(barcode);
                 if (product is not null) {
 
                     item.BarcodeCandidate = barcode;
@@ -185,7 +173,7 @@ public class ReceiptUploaderViewModel
 
         try
         {
-            var product = await _productApiService.GetProductByNameAsync(productName);
+            var product = await productApiService.GetProductByNameAsync(productName);
             if (product is null)
             {
                 return Result.Failure($"Product with name {productName} not found.");

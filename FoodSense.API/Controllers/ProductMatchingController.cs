@@ -31,7 +31,7 @@ public class ProductMatchingController : ControllerBase
             {
                 Barcode = mapping?.Product?.Barcode ?? string.Empty,
                 ProductId = mapping?.Product?.Id ?? 0,
-                ProductName = mapping?.Product?.ProductName ?? string.Empty,
+                ProductName = mapping?.Product?.Name ?? string.Empty,
             };
         }).ToArray();
 

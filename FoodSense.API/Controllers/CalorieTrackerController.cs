@@ -1,6 +1,7 @@
 using FoodSense.API.Data.Models;
 using FoodSense.API.Services;
 using FoodSense.Common.Models;
+using FoodSense.Common.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FoodSense.API.Controllers;
@@ -10,9 +11,20 @@ namespace FoodSense.API.Controllers;
 public class CalorieTrackerController(IFoodLogService foodLogService) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> LogAndConsumeFromPantry([FromBody] LogConsumptionRequest request)
+    public async Task<IActionResult> LogAndConsumeFromPantry([FromBody] AddFoodLogRequest request)
     {
         var result = await foodLogService.LogConsumptionAndReducePantryAsync(request);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result.ErrorMessage);
+        }
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateConsumption([FromBody] EditFoodLogRequest request)
+    {
+        var result = await foodLogService.EditConsumptionAsync(request);
         if (!result.IsSuccess)
         {
             return BadRequest(result.ErrorMessage);

@@ -100,7 +100,7 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
         }
 
         return query
-            .Where(p => EF.Functions.Like(p.ProductName, pattern, "\\"))
+            .Where(p => EF.Functions.Like(p.Name, pattern, "\\"))
             .OrderBy(p => p.Id)
             .FirstOrDefaultAsync();
     }
@@ -120,7 +120,7 @@ public class ProductRepository(FoodSenseDbContext context) : IProductRepository
         }
 
         return query
-            .Where(p => EF.Functions.Like(p.ProductName, pattern, "\\"))
+            .Where(p => EF.Functions.Like(p.Name, pattern, "\\"))
             .OrderBy(p => p.Id)
             .ToListAsync();
     }

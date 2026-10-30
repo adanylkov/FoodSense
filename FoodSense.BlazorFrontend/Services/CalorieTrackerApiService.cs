@@ -1,11 +1,12 @@
 using FoodSense.API.Data.Models;
 using FoodSense.Common.Models;
+using FoodSense.Common.Requests;
 
 namespace FoodSense.BlazorFrontend.Services;
 
 public interface ICalorieTrackerApiService
 {
-    Task<HttpResponseMessage> LogAndConsumeAsync(int productId, decimal quantity, int? pantryItemId = null, MealType mealType = MealType.Lunch);
+    Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request);
     Task<UserNutritionalGoals?> GetUserGoalsAsync();
     Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date);
 }
@@ -19,15 +20,9 @@ public class CalorieTrackerApiService : ICalorieTrackerApiService
         _http = http;
     }
 
-    public async Task<HttpResponseMessage> LogAndConsumeAsync(int productId, decimal quantity, int? pantryItemId = null, MealType mealType = MealType.Lunch)
+    public async Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request)
     {
-        return await _http.PostAsJsonAsync("api/CalorieTracker/LogAndConsumeFromPantry", new LogConsumptionRequest
-        {
-            ProductId = productId,
-            Quantity = quantity,
-            PantryItemId = pantryItemId,
-            MealType = mealType
-        });
+        return await _http.PostAsJsonAsync("api/CalorieTracker/LogAndConsumeFromPantry", request);
     }
 
     public async Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date)
