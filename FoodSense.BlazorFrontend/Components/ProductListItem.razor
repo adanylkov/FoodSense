@@ -37,10 +37,10 @@
                     </span>
                     @if (Product.Nutrients != null)
                     {
-                        <span>@Product.Nutrients.EnergyKcal kcal</span>
-                        <span>@Product.Nutrients.Proteins g protein</span>
-                        <span>@Product.Nutrients.Carbohydrates g carbs</span>
-                        <span>@Product.Nutrients.Fat g fat</span>
+                        <span class="kcal-color fw-semibold text-nowrap">@Product.Nutrients.EnergyKcal kcal</span>
+                        <span class="protein-color fw-semibold text-nowrap">@Product.Nutrients.Proteins g protein</span>
+                        <span class="carbs-color fw-semibold text-nowrap">@Product.Nutrients.Carbohydrates g carbs</span>
+                        <span class="fat-color fw-semibold text-nowrap">@Product.Nutrients.Fat g fat</span>
                     }
                 </div>
             </div>
