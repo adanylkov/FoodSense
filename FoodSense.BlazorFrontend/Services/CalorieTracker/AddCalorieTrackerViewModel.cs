@@ -130,7 +130,7 @@ public class AddCalorieTrackerViewModel : ViewModelBase
 
             foreach (var item in SelectedItems)
             {
-                var response = await _calorieTrackerApi.LogAndConsumeAsync(
+                var response = await _calorieTrackerApi.LogConsumptionAsync(
                     new Common.Requests.AddFoodLogRequest
                     {
                         ProductId = item.Product.Id,

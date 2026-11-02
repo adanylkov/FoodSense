@@ -11,6 +11,12 @@
 - Verify claims from the user or from a previous agent with commands (`rg`, `git show --stat`, build, tests) before acting on them.
 - Check `TODO.md` for the task list and mark finished items.
 
+## Loop Protection & Context Budget (Mandatory)
+- **Tool Call Budget:** You MUST NOT exceed 12 consecutive tool calls in a single loop/turn without stopping to report progress and ask the user for confirmation to continue.
+- **Self-Correction & Fallback:** If a tool call or command fails 2 times in a row, STOP immediately. Do not keep retrying in a loop. Explain the error, show what failed, and propose alternative approaches.
+- **Log & Output Truncation:** Never dump full, raw outputs of long commands, console logs, or large files into the conversation history. Extract and keep only the relevant lines/errors needed for the task.
+- **Rolling Summary & State Checkpoint:** Every 5-6 tool executions (or when switching sub-tasks), maintain a concise internal state checkpoint (files modified, current status, next exact step) to avoid losing track of the goal as context grows.
+
 ## Never trust markup
 - Every CSS class used in `.razor` markup must exist in `FoodSense.BlazorFrontend/wwwroot/app.css` or come from Bootstrap. A class that is not defined is dead code — defining missing classes is part of the task, not an optional extra.
 - `bootstrap-utilities.css` is NOT linked in `Components/App.razor` (only `app.css`, which imports plain `bootstrap` CSS). So utility classes like `object-fit-contain`, `min-width-0`, `d-none`, `text-truncate` only work if defined locally in `app.css`.

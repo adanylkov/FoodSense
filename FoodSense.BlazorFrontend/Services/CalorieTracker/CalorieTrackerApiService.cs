@@ -5,7 +5,7 @@ namespace FoodSense.BlazorFrontend.Services;
 
 public interface ICalorieTrackerApiService
 {
-    Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request);
+    Task<HttpResponseMessage> LogConsumptionAsync(AddFoodLogRequest request);
     Task<HttpResponseMessage> UpdateConsumptionAsync(EditFoodLogRequest request);
     Task<UserNutritionalGoalsDto?> GetUserGoalsAsync();
     Task<List<FoodLogEntryDto>> GetFoodLogEntriesAsync(DateTime date);
@@ -21,9 +21,9 @@ public class CalorieTrackerApiService : ICalorieTrackerApiService
         _http = http;
     }
 
-    public async Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request)
+    public async Task<HttpResponseMessage> LogConsumptionAsync(AddFoodLogRequest request)
     {
-        return await _http.PostAsJsonAsync("api/CalorieTracker/LogAndConsumeFromPantry", request);
+        return await _http.PostAsJsonAsync("api/CalorieTracker/LogConsumption", request);
     }
 
     public async Task<HttpResponseMessage> UpdateConsumptionAsync(EditFoodLogRequest request)
