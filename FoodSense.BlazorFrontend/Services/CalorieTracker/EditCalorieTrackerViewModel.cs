@@ -3,23 +3,21 @@ namespace FoodSense.BlazorFrontend.ViewModels;
 using FoodSense.Common.Models;
 using FoodSense.ViewModels;
 using FoodSense.BlazorFrontend.Services;
-using FoodSense.API.Data.Models;
 using FoodSense.Common.Requests;
 using Microsoft.AspNetCore.Components;
-using FoodSense.API.Data.ValueObjects;
 
 public class EditCalorieTrackerViewModel(AlertService alerts, ICalorieTrackerApiService calorieTrackerApi) : ViewModelBase(alerts)
 {
     public bool IsOpen { get; private set; }
-    public FoodLogEntry? CurrentEntry { get; private set; }
-    public NutritionSnapshot OriginalNutritions { get; private set; } = new NutritionSnapshot(0, 0, 0, 0);
-    public NutritionSnapshot CurrentNutritions { get; private set; } = new NutritionSnapshot(0, 0, 0, 0);
+    public FoodLogEntryDto? CurrentEntry { get; private set; }
+    public NutritionSnapshotDto OriginalNutritions { get; private set; } = new NutritionSnapshotDto(0, 0, 0, 0);
+    public NutritionSnapshotDto CurrentNutritions { get; private set; } = new NutritionSnapshotDto(0, 0, 0, 0);
     public decimal Quantity { get; private set; } = 0;
     public MealType MealType { get; private set; }
 
     public event Func<Task>? EntryUpdated;
 
-    public void Open(FoodLogEntry entry)
+    public void Open(FoodLogEntryDto entry)
     {
         IsOpen = true;
         CurrentEntry = entry;
@@ -126,7 +124,7 @@ public class EditCalorieTrackerViewModel(AlertService alerts, ICalorieTrackerApi
 
         var ratio = (double)(quantity / Quantity);
         Quantity = quantity;
-        CurrentNutritions = new NutritionSnapshot(
+        CurrentNutritions = new NutritionSnapshotDto(
             Math.Round(CurrentNutritions.Calories * ratio, 1),
             Math.Round(CurrentNutritions.Protein * ratio, 1),
             Math.Round(CurrentNutritions.Fat * ratio, 1),

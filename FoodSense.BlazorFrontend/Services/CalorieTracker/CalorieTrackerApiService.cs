@@ -1,4 +1,3 @@
-using FoodSense.API.Data.Models;
 using FoodSense.Common.Models;
 using FoodSense.Common.Requests;
 
@@ -8,8 +7,8 @@ public interface ICalorieTrackerApiService
 {
     Task<HttpResponseMessage> LogAndConsumeAsync(AddFoodLogRequest request);
     Task<HttpResponseMessage> UpdateConsumptionAsync(EditFoodLogRequest request);
-    Task<UserNutritionalGoals?> GetUserGoalsAsync();
-    Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date);
+    Task<UserNutritionalGoalsDto?> GetUserGoalsAsync();
+    Task<List<FoodLogEntryDto>> GetFoodLogEntriesAsync(DateTime date);
     Task<HttpResponseMessage> DeleteFoodLogEntryAsync(int id);
 }
 
@@ -32,14 +31,14 @@ public class CalorieTrackerApiService : ICalorieTrackerApiService
         return await _http.PutAsJsonAsync("api/CalorieTracker/UpdateConsumption", request);
     }
 
-    public async Task<List<FoodLogEntry>> GetFoodLogEntriesAsync(DateTime date)
+    public async Task<List<FoodLogEntryDto>> GetFoodLogEntriesAsync(DateTime date)
     {
-        return await _http.GetFromJsonAsync<List<FoodLogEntry>>($"api/CalorieTracker/GetEntries?date={date:yyyy-MM-dd}") ?? [];
+        return await _http.GetFromJsonAsync<List<FoodLogEntryDto>>($"api/CalorieTracker/GetEntries?date={date:yyyy-MM-dd}") ?? [];
     }
 
-    public async Task<UserNutritionalGoals?> GetUserGoalsAsync()
+    public async Task<UserNutritionalGoalsDto?> GetUserGoalsAsync()
     {
-        return await _http.GetFromJsonAsync<UserNutritionalGoals>("api/CalorieTracker/GetGoals");
+        return await _http.GetFromJsonAsync<UserNutritionalGoalsDto>("api/CalorieTracker/GetGoals");
     }
 
     public Task<HttpResponseMessage> DeleteFoodLogEntryAsync(int id)

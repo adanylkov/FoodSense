@@ -1,4 +1,3 @@
-using FoodSense.API.Services;
 using FoodSense.BlazorFrontend.Components;
 using FoodSense.BlazorFrontend.Services;
 using FoodSense.BlazorFrontend.ViewModels;
