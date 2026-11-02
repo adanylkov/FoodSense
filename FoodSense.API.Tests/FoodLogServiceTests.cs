@@ -14,13 +14,13 @@ namespace FoodSense.API.Tests;
 public class FoodLogServiceTests
 {
     [Fact]
-    public async Task LogConsumptionAndReducePantryAsync_ShouldRejectInvalidProductId()
+    public async Task LogConsumptionAsync_ShouldRejectInvalidProductId()
     {
         await using var context = CreateContext();
         var logger = new Mock<ILogger<FoodLogService>>().Object;
         var service = new FoodLogService(context , logger);
 
-        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
+        var result = await service.LogConsumptionAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = 0,
             Quantity = 100
@@ -34,13 +34,13 @@ public class FoodLogServiceTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task LogConsumptionAndReducePantryAsync_ShouldRejectNonPositiveQuantity(decimal quantity)
+    public async Task LogConsumptionAsync_ShouldRejectNonPositiveQuantity(decimal quantity)
     {
         await using var context = CreateContext();
         var logger = new Mock<ILogger<FoodLogService>>().Object;
         var service = new FoodLogService(context , logger);
 
-        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
+        var result = await service.LogConsumptionAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = 1,
             Quantity = quantity
@@ -52,7 +52,7 @@ public class FoodLogServiceTests
     }
 
     [Fact]
-    public async Task LogConsumptionAndReducePantryAsync_ShouldLogNutrientsAndReduceMatchingPantryItem()
+    public async Task LogConsumptionAsync_ShouldLogNutrients()
     {
         await using var context = CreateContext();
         var product = new Product
@@ -66,13 +66,12 @@ public class FoodLogServiceTests
                 Carbohydrates = 30
             }
         };
-        product.PantryItems.Add(new PantryItem(product, 500));
         context.Products.Add(product);
         await context.SaveChangesAsync();
 
         var logger = new Mock<ILogger<FoodLogService>>().Object;
         var service = new FoodLogService(context , logger);
-        var result = await service.LogConsumptionAndReducePantryAsync(new Common.Requests.AddFoodLogRequest
+        var result = await service.LogConsumptionAsync(new Common.Requests.AddFoodLogRequest
         {
             ProductId = product.Id,
             Quantity = 200,
@@ -89,9 +88,6 @@ public class FoodLogServiceTests
         logEntry.Nutritions.Protein.Should().Be(20);
         logEntry.Nutritions.Fat.Should().Be(16);
         logEntry.Nutritions.Carbs.Should().Be(60);
-
-        var pantryItem = await context.PantryItems.SingleAsync();
-        pantryItem.Quantity.Should().Be(300);
     }
 
     private static FoodSenseDbContext CreateContext()

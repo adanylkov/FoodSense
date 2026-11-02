@@ -11,9 +11,9 @@ namespace FoodSense.API.Controllers;
 public class CalorieTrackerController(IFoodLogService foodLogService) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> LogAndConsumeFromPantry([FromBody] AddFoodLogRequest request)
+    public async Task<IActionResult> LogConsumption([FromBody] AddFoodLogRequest request)
     {
-        var result = await foodLogService.LogConsumptionAndReducePantryAsync(request);
+        var result = await foodLogService.LogConsumptionAsync(request);
         if (!result.IsSuccess)
         {
             return BadRequest(result.ErrorMessage);

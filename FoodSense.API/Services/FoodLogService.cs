@@ -71,7 +71,7 @@ public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> 
             .FirstOrDefaultAsync() ?? new UserNutritionalGoals();
     }
 
-    public async Task<Result> LogConsumptionAndReducePantryAsync(AddFoodLogRequest request)
+    public async Task<Result> LogConsumptionAsync(AddFoodLogRequest request)
     {
         if (request.ProductId <= 0)
         {
@@ -112,7 +112,7 @@ public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> 
 
                 await context.FoodLogEntries.AddAsync(logEntry);
 
-                // 5. Zapisz zmiany i zatwierdź transakcję
+                // Save changes and commit the transaction
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -120,7 +120,7 @@ public class FoodLogService(FoodSenseDbContext context, ILogger<FoodLogService> 
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An error occurred while logging consumption and reducing pantry.");
+                logger.LogError(ex, "An error occurred while logging consumption.");
                 await transaction.RollbackAsync();
                 return Result.Failure($"An error occurred while logging consumption: {ex.Message}");
             }

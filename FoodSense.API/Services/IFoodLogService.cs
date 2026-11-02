@@ -7,7 +7,7 @@ namespace FoodSense.API.Services;
 
 public interface IFoodLogService
 {
-    Task<Result> LogConsumptionAndReducePantryAsync(AddFoodLogRequest request);
+    Task<Result> LogConsumptionAsync(AddFoodLogRequest request);
     Task<UserNutritionalGoals?> GetUserGoalsAsync();
     Task<IEnumerable<FoodLogEntry>> GetEntriesByDateAsync(DateTime date);
     Task<Result> EditConsumptionAsync(EditFoodLogRequest request);
