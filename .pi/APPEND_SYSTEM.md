@@ -23,7 +23,10 @@
 - Tests: `dotnet test FoodSense.BlazorFrontend.Tests`, `dotnet test FoodSense.ReceiptReader.Tests`, `dotnet test FoodSense.API.Tests`.
 - Known pre-existing failure, unrelated to UI work: `FoodSense.API.Tests.FoodLogServiceTests.LogConsumptionAndReducePantryAsync_ShouldLogNutrientsAndReduceMatchingPantryItem`. Do not fix it as a side effect of a UI task; report it as a separate issue.
 - Run the app: `./Start.ps1` (API + Frontend in separate windows), or `dotnet run --project FoodSense.BlazorFrontend`.
-- `gh` CLI is not installed. Open PRs through the link printed by `git push`: `https://github.com/adanylkov/FoodSense/compare/master...<branch>`.
+- `gh` CLI (2.103.3, installed with winget) is available at `C:\Program Files\GitHub CLI\` and is in the Machine `PATH`, but a fresh shell tool call does not inherit it — prefix commands with `export PATH="$PATH:/c/Program Files/GitHub CLI"` (or run them via `bash -lc`).
+- `gh` is not authenticated. Check `gh auth status` before using it. The login flow (`gh auth login`) is interactive — do not attempt it; tell me to run it.
+- Authenticated: create the PR with `gh pr create -B master -H <branch> -F PR-body.md -t "<commit summary>"` and report the printed URL.
+- Not authenticated: fall back to the link printed by `git push`: `https://github.com/adanylkov/FoodSense/compare/master...<branch>`, and state that the PR was not created automatically.
 - No CI in the repo; the build and tests you run are the only gate.
 
 ## Definition of done
@@ -32,7 +35,7 @@
 3. `dotnet test` compared with the pre-change baseline; any new failure must be fixed.
 4. UI changes verified in a browser (DevTools: mobile viewport 375 px, "Emulate a touch device", measure the real rendered height of the changed element, check `getComputedStyle` for the classes you added).
 5. Commit on a feature branch. Never commit directly to `master`.
-6. Push, then provide the PR link with a body: what changed, measured before/after values, trade-offs, known issues.
+6. Push, then create the PR with `gh pr create` (if authenticated) and give me the URL; otherwise give the `compare/master...<branch>` link. Body: what changed, measured before/after values, trade-offs, known issues.
 7. Add a follow-up commit for feedback rather than amending a pushed commit.
 
 ## Conventions
