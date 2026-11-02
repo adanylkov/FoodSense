@@ -272,3 +272,11 @@ __pycache__/
 # tools/
 
 # End of https://www.toptal.com/developers/gitignore/api/aspnetcore
+
+### Local agent / PR artifacts
+PR-body.md
+
+### Local run artifacts
+.dotnet
+.build
+.ms
