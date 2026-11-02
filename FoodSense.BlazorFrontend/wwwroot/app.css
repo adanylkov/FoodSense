@@ -71,6 +71,49 @@ h1:focus {
     text-align: start;
 }
 
+/* Compact typography used by product components. Bootstrap only ships .small
+   (0.875em); .extra-small was referenced in markup without a definition. */
+.extra-small {
+    font-size: 0.75rem;
+}
+
+/* Bootstrap has no .min-width-0 utility and bootstrap-utilities.css is not
+   linked in App.razor, so text-truncate inside a flex .col needs this. */
+.min-width-0 {
+    min-width: 0;
+}
+
+/* 0.75rem text alone gives a ~21px tall .btn-sm, which is a poor touch target on
+   phones. Keep compact buttons tappable without adding much row height. */
+.btn.btn-sm.extra-small {
+    min-height: 2rem;
+}
+
+/* Icon-only round buttons (debug / edit / delete) need the same floor. */
+.btn.btn-sm.rounded-circle {
+    min-height: 2rem;
+    min-width: 2rem;
+}
+
+/* Product list item thumbnail. Mobile-first: small square on phones, larger at md+. */
+.product-thumb {
+    width: 56px;
+    height: 56px;
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@media (min-width: 768px) {
+    .product-thumb {
+        width: 88px;
+        height: 88px;
+    }
+}
+
 .kcal-color {
     color: #e79f18;
 }
