@@ -4,7 +4,6 @@ using FoodSense.Common.Models;
 using FoodSense.BlazorFrontend.Services;
 using FoodSense.ViewModels;
 using FoodSense.Services;
-using FoodSense.API.Data.Models;
 using Microsoft.AspNetCore.Components;
 
 public class CalorieTrackerListViewModel : ViewModelBase, IDisposable
@@ -12,8 +11,8 @@ public class CalorieTrackerListViewModel : ViewModelBase, IDisposable
     private readonly ICalorieTrackerApiService _calorieTrackerApi;
     
     public DateTime SelectedDate { get; private set; } = DateTime.Today;
-    public List<FoodLogEntry> LogEntries { get; private set; } = [];
-    public UserNutritionalGoals Goals { get; private set; } = new();
+    public List<FoodLogEntryDto> LogEntries { get; private set; } = [];
+    public UserNutritionalGoalsDto Goals { get; private set; } = new();
     public bool IsLoading { get; private set; }
     public TotalNutrients TotalNutrients { get; private set; }
 

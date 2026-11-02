@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using FoodSense.API.Data.Models;
 
 namespace FoodSense.ReceiptReader;
 
