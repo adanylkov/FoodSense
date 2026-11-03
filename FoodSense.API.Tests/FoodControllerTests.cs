@@ -7,7 +7,6 @@ using FoodSense.API.Repositories;
 using FoodSense.API.Services;
 using FoodSense.Common.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -25,10 +24,7 @@ public class FoodControllerTests
         }
         await context.SaveChangesAsync();
 
-
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page: 2, pageSize: 25);
@@ -52,9 +48,7 @@ public class FoodControllerTests
         context.Products.AddRange(productInStock, productOutOfStock, new Product { Barcode = "3" });
         await context.SaveChangesAsync();
 
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page: 1, pageSize: 25, hasPantryItems: true);
@@ -72,9 +66,7 @@ public class FoodControllerTests
     public async Task GetProducts_ShouldRejectInvalidPagination(int page, int pageSize)
     {
         await using var context = CreateContext();
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
 
         var result = await controller.GetProducts(page, pageSize);
@@ -86,21 +78,36 @@ public class FoodControllerTests
     public async Task CreateProduct_ShouldPersistAndReturnCreated()
     {
         await using var context = CreateContext();
-        var productRepository = new ProductRepository(context);
-        var opfClientMock = new Mock<IOpenFoodFactsClient>();
-        opfClientMock.Setup(client => client.GetProductByBarcodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((OpenFoodFactProduct?)null);
-
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, opfClientMock.Object, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
 
-        var createdProduct = new Product { Barcode = "5901234567890" };
+        var createdProduct = new ProductDto { Barcode = "5901234567890" };
         var result = await controller.CreateProduct(createdProduct);
 
         var createdAt = result.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdAt.ActionName.Should().Be(nameof(ProductController.GetProductById));
         context.Products.Should().ContainSingle(p => p.Barcode == "5901234567890");
+    }
+
+    [Fact]
+    public async Task CreateProduct_ShouldPersistFieldsSentAsDto()
+    {
+        await using var context = CreateContext();
+        var productService = CreateService(context);
+        var controller = new ProductController(productService);
+
+        var result = await controller.CreateProduct(new ProductDto
+        {
+            ProductName = "Apple",
+            FrontImageUrl = "https://images.openfoodfacts.org/images/products/123/front.jpg",
+            Nutrients = new NutrientsDto { EnergyKcal = 52, Proteins = 0.3 }
+        });
+
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var persisted = context.Products.Single(p => p.Name == "Apple");
+        persisted.Nutrients.Kcal.Should().Be(52);
+        persisted.Nutrients.Proteins.Should().Be(0.3);
+        persisted.FrontImageUrl.Should().Be("https://images.openfoodfacts.org/images/products/123/front.jpg");
     }
 
     [Fact]
@@ -110,11 +117,9 @@ public class FoodControllerTests
         context.Products.Add(new Product { Barcode = "111" });
         await context.SaveChangesAsync();
 
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
-        var result = await controller.CreateProduct(new Product { Barcode = "111" });
+        var result = await controller.CreateProduct(new ProductDto { Barcode = "111" });
 
         result.Result.Should().BeOfType<ConflictObjectResult>();
     }
@@ -127,11 +132,9 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
-        var updated = new Product { Barcode = "222" };
+        var updated = new ProductDto { Id = existing.Id, Barcode = "222" };
 
         var result = await controller.UpdateProduct(existing.Id, updated);
 
@@ -153,14 +156,22 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
-        var updated = new Product
+        var updated = new ProductDto
         {
+            Id = existing.Id,
             Barcode = "222",
-            Nutrients = new Nutrients { Kcal = 250, Fat = 5, SaturatedFat = 2, Carbohydrates = 30, Sugars = 10, Proteins = 12, Salt = 1.5 }
+            Nutrients = new NutrientsDto
+            {
+                EnergyKcal = 250,
+                Fat = 5,
+                SaturatedFat = 2,
+                Carbohydrates = 30,
+                Sugars = 10,
+                Proteins = 12,
+                Salt = 1.5
+            }
         };
 
         var result = await controller.UpdateProduct(existing.Id, updated);
@@ -182,14 +193,154 @@ public class FoodControllerTests
         context.Products.Add(existing);
         await context.SaveChangesAsync();
 
-        var productRepository = new ProductRepository(context);
-        var productMappingRepository = new ProductMappingRepository(context);
-        var productService = new ProductService(productRepository, null!, productMappingRepository);
+        var productService = CreateService(context);
         var controller = new ProductController(productService);
         var result = await controller.DeleteProduct(existing.Id);
 
         result.Should().BeOfType<NoContentResult>();
         (await context.Products.FindAsync(existing.Id)).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SearchProducts_ShouldReturnLocalMatchesFirst()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var local = new Product { Name = "Jogurt naturalny", Barcode = "111", Nutrients = new Nutrients { Kcal = 60 } };
+        context.Products.Add(local);
+        await context.SaveChangesAsync();
+
+        var openFoodFactsClient = CreateOpenFoodFactsClient(new[]
+        {
+            new OpenFoodFactProduct
+            {
+                Code = "222",
+                Name = "Jogurt truskawkowy",
+                Brand = "Olimp",
+                ImageSmallUrl = "https://images.openfoodfacts.org/images/products/222/front.jpg",
+                Nutrients = new OpenFoodFactNutrition { Calories = 80 }
+            }
+        });
+
+        var controller = new ProductController(CreateService(context, openFoodFactsClient.Object));
+
+        // Act
+        var okResult = (await controller.SearchProducts("jogurt")).Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductSearchResultDto>>>().Subject;
+        var results = response.Data?.ToList() ?? [];
+
+        // Assert
+        results.Should().HaveCount(2);
+        results[0].Source.Should().Be(ProductSource.Local);
+        results[0].ProductId.Should().Be(local.Id);
+        results[1].Source.Should().Be(ProductSource.OpenFoodFacts);
+        results[1].ProductId.Should().Be(0);
+        results[1].IsPersisted.Should().BeFalse();
+        results[1].Brand.Should().Be("Olimp");
+        results[1].Nutrients.EnergyKcal.Should().Be(80);
+    }
+
+    [Fact]
+    public async Task SearchProducts_ShouldNotPersistOpenFoodFactsCandidates()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var openFoodFactsClient = CreateOpenFoodFactsClient(new[]
+        {
+            new OpenFoodFactProduct
+            {
+                Code = "222",
+                Name = "Jogurt truskawkowy",
+                Nutrients = new OpenFoodFactNutrition { Calories = 80 }
+            }
+        });
+
+        var controller = new ProductController(CreateService(context, openFoodFactsClient.Object));
+
+        // Act
+        var okResult = (await controller.SearchProducts("jogurt")).Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductSearchResultDto>>>().Subject;
+
+        // Assert
+        response.Data.Should().ContainSingle().Which.Source.Should().Be(ProductSource.OpenFoodFacts);
+        context.Products.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SearchProducts_ShouldSkipOpenFoodFactsCandidatesAlreadyInCatalog()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        context.Products.Add(new Product { Name = "Jogurt", Barcode = "111", Nutrients = new Nutrients { Kcal = 60 } });
+        await context.SaveChangesAsync();
+
+        var openFoodFactsClient = CreateOpenFoodFactsClient(new[]
+        {
+            new OpenFoodFactProduct { Code = "111", Name = "Jogurt" },
+            new OpenFoodFactProduct { Code = "222", Name = "Ser" }
+        });
+
+        var controller = new ProductController(CreateService(context, openFoodFactsClient.Object));
+
+        // Act
+        var okResult = (await controller.SearchProducts("jogurt")).Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductSearchResultDto>>>().Subject;
+
+        // Assert
+        response.Data.Should().HaveCount(2);
+        response.Data.Should().ContainSingle(r => r.ProductId > 0).Which.Name.Should().Be("Jogurt");
+        response.Data.Should().ContainSingle(r => r.ProductId == 0).Which.Name.Should().Be("Ser");
+        context.Products.Should().ContainSingle();
+    }
+
+    [Theory]
+    [InlineData("", 10)]
+    [InlineData("   ", 10)]
+    public async Task SearchProducts_ShouldReturnEmptyResultForBlankQuery(string name, int limit)
+    {
+        // Arrange
+        await using var context = CreateContext();
+        context.Products.Add(new Product { Name = "Jogurt", Nutrients = new Nutrients { Kcal = 60 } });
+        await context.SaveChangesAsync();
+
+        var controller = new ProductController(CreateService(context));
+
+        // Act
+        var okResult = (await controller.SearchProducts(name, limit)).Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeAssignableTo<ApiResponse<IEnumerable<ProductSearchResultDto>>>().Subject;
+
+        // Assert
+        response.Data.Should().BeEmpty();
+        response.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetProductByBarcode_ShouldReturnOpenFoodFactsHitWithoutPersistingIt()
+    {
+        // Arrange
+        await using var context = CreateContext();
+        var openFoodFactsClient = new Mock<IOpenFoodFactsClient>();
+        openFoodFactsClient
+            .Setup(client => client.GetProductByBarcodeAsync("111", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new OpenFoodFactProduct
+            {
+                Code = "111",
+                Name = "Mleko",
+                Brand = "Mlekpol",
+                Nutrients = new OpenFoodFactNutrition { Calories = 44 }
+            });
+
+        var service = CreateService(context, openFoodFactsClient.Object);
+
+        // Act
+        var product = await service.GetProductByBarcodeAsync("111");
+
+        // Assert
+        product.Should().NotBeNull();
+        product!.Id.Should().Be(0);
+        product.ProductName.Should().Be("Mleko");
+        product.Nutrients.EnergyKcal.Should().Be(44);
+        context.Products.Should().BeEmpty();
     }
 
     private static FoodSenseDbContext CreateContext()
@@ -199,5 +350,27 @@ public class FoodControllerTests
             .Options;
 
         return new FoodSenseDbContext(options);
+    }
+
+    private static ProductService CreateService(
+        FoodSenseDbContext context,
+        IOpenFoodFactsClient? openFoodFactsClient = null)
+    {
+        return new ProductService(
+            new ProductRepository(context),
+            openFoodFactsClient ?? CreateOpenFoodFactsClient().Object,
+            new ProductMappingRepository(context));
+    }
+
+    private static Mock<IOpenFoodFactsClient> CreateOpenFoodFactsClient(
+        IEnumerable<OpenFoodFactProduct>? searchResults = null)
+    {
+        var mock = new Mock<IOpenFoodFactsClient>();
+        mock.Setup(client => client.GetProductByBarcodeAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((OpenFoodFactProduct?)null);
+        mock.Setup(client => client.SearchProductsAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(searchResults?.ToList() ?? []);
+
+        return mock;
     }
 }
