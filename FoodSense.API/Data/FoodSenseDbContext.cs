@@ -22,11 +22,18 @@ public class FoodSenseDbContext(DbContextOptions options) : DbContext(options)
             entity.HasIndex(p => p.Barcode)
                 .IsUnique()
                 .HasFilter("[Barcode] IS NOT NULL");
-            entity.OwnsOne(p => p.Nutrients);
+            // Nutrients are seeded separately because EF Core cannot seed through an owned
+            // navigation; rows are keyed by the ProductId of the seeded products.
+            entity.OwnsOne(p => p.Nutrients, nutrients => nutrients.HasData(ProductSeed.NutrientsData));
             entity.HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Everyday produce sold without a barcode: seeds so name-based search and the
+            // receipt matcher find them on a fresh database. Barcode stays null, which keeps
+            // the filtered unique index on Barcode intact.
+            entity.HasData(ProductSeed.Data);
         });
 
         modelBuilder.Entity<Category>(entity =>

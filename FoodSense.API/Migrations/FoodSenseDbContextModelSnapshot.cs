@@ -45,7 +45,7 @@ namespace FoodSense.API.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
 
                     b.HasData(
                         new
@@ -120,7 +120,7 @@ namespace FoodSense.API.Migrations
 
                     b.HasIndex("UserId", "Date");
 
-                    b.ToTable("FoodLogEntries");
+                    b.ToTable("FoodLogEntries", (string)null);
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.PantryItem", b =>
@@ -151,7 +151,7 @@ namespace FoodSense.API.Migrations
 
                     b.HasIndex("ProductId", "UserId");
 
-                    b.ToTable("PantryItems");
+                    b.ToTable("PantryItems", (string)null);
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.Product", b =>
@@ -184,7 +184,443 @@ namespace FoodSense.API.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 2001,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Jabłko"
+                        },
+                        new
+                        {
+                            Id = 2002,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Banan"
+                        },
+                        new
+                        {
+                            Id = 2003,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Gruszka"
+                        },
+                        new
+                        {
+                            Id = 2004,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Pomarańcza"
+                        },
+                        new
+                        {
+                            Id = 2005,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Mandarynka"
+                        },
+                        new
+                        {
+                            Id = 2006,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Truskawki"
+                        },
+                        new
+                        {
+                            Id = 2007,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Maliny"
+                        },
+                        new
+                        {
+                            Id = 2008,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Borówka amerykańska"
+                        },
+                        new
+                        {
+                            Id = 2009,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Czereśnie"
+                        },
+                        new
+                        {
+                            Id = 2010,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Śliwka"
+                        },
+                        new
+                        {
+                            Id = 2011,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Winogrona"
+                        },
+                        new
+                        {
+                            Id = 2012,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Kiwi"
+                        },
+                        new
+                        {
+                            Id = 2013,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Mango"
+                        },
+                        new
+                        {
+                            Id = 2014,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Awokado"
+                        },
+                        new
+                        {
+                            Id = 2015,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Melon"
+                        },
+                        new
+                        {
+                            Id = 2016,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Granat"
+                        },
+                        new
+                        {
+                            Id = 2017,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Morela"
+                        },
+                        new
+                        {
+                            Id = 2018,
+                            CategoryId = 1,
+                            FrontImageUrl = "",
+                            Name = "Brzoskwinia"
+                        },
+                        new
+                        {
+                            Id = 2101,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Ziemniaki"
+                        },
+                        new
+                        {
+                            Id = 2102,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Pomidor"
+                        },
+                        new
+                        {
+                            Id = 2103,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Ogórek"
+                        },
+                        new
+                        {
+                            Id = 2104,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Marchew"
+                        },
+                        new
+                        {
+                            Id = 2105,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Cebula"
+                        },
+                        new
+                        {
+                            Id = 2106,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Czosnek"
+                        },
+                        new
+                        {
+                            Id = 2107,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Por"
+                        },
+                        new
+                        {
+                            Id = 2108,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Kapusta biała"
+                        },
+                        new
+                        {
+                            Id = 2109,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Kapusta czerwona"
+                        },
+                        new
+                        {
+                            Id = 2110,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Kalafior"
+                        },
+                        new
+                        {
+                            Id = 2111,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Brokuł"
+                        },
+                        new
+                        {
+                            Id = 2112,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Cukinia"
+                        },
+                        new
+                        {
+                            Id = 2113,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Sałata"
+                        },
+                        new
+                        {
+                            Id = 2114,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Papryka czerwona"
+                        },
+                        new
+                        {
+                            Id = 2115,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Zielony groszek"
+                        },
+                        new
+                        {
+                            Id = 2116,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Szpinak"
+                        },
+                        new
+                        {
+                            Id = 2117,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Szparagi"
+                        },
+                        new
+                        {
+                            Id = 2118,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Bataty"
+                        },
+                        new
+                        {
+                            Id = 2119,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Dynia"
+                        },
+                        new
+                        {
+                            Id = 2120,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Burak"
+                        },
+                        new
+                        {
+                            Id = 2121,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Seler"
+                        },
+                        new
+                        {
+                            Id = 2122,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Seler naciowy"
+                        },
+                        new
+                        {
+                            Id = 2123,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Pietruszka korzeń"
+                        },
+                        new
+                        {
+                            Id = 2124,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Kukurydza"
+                        },
+                        new
+                        {
+                            Id = 2125,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Imbir"
+                        },
+                        new
+                        {
+                            Id = 2126,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Szczypiorek"
+                        },
+                        new
+                        {
+                            Id = 2127,
+                            CategoryId = 2,
+                            FrontImageUrl = "",
+                            Name = "Koperek"
+                        },
+                        new
+                        {
+                            Id = 2201,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Ryż biały"
+                        },
+                        new
+                        {
+                            Id = 2202,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Płatki owsiane"
+                        },
+                        new
+                        {
+                            Id = 2203,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Kasza gryczana"
+                        },
+                        new
+                        {
+                            Id = 2204,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Makaron"
+                        },
+                        new
+                        {
+                            Id = 2205,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Mąka pszenna"
+                        },
+                        new
+                        {
+                            Id = 2206,
+                            CategoryId = 3,
+                            FrontImageUrl = "",
+                            Name = "Chleb"
+                        },
+                        new
+                        {
+                            Id = 2301,
+                            CategoryId = 4,
+                            FrontImageUrl = "",
+                            Name = "Mleko 3,2%"
+                        },
+                        new
+                        {
+                            Id = 2302,
+                            CategoryId = 4,
+                            FrontImageUrl = "",
+                            Name = "Śmietana 18%"
+                        },
+                        new
+                        {
+                            Id = 2303,
+                            CategoryId = 4,
+                            FrontImageUrl = "",
+                            Name = "Jogurt naturalny"
+                        },
+                        new
+                        {
+                            Id = 2304,
+                            CategoryId = 4,
+                            FrontImageUrl = "",
+                            Name = "Masło"
+                        },
+                        new
+                        {
+                            Id = 2401,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Jajko"
+                        },
+                        new
+                        {
+                            Id = 2402,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Pieczarki"
+                        },
+                        new
+                        {
+                            Id = 2403,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Oliwa z oliwek"
+                        },
+                        new
+                        {
+                            Id = 2404,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Cukier"
+                        },
+                        new
+                        {
+                            Id = 2405,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Miód"
+                        },
+                        new
+                        {
+                            Id = 2406,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Orzechy włoskie"
+                        },
+                        new
+                        {
+                            Id = 2407,
+                            CategoryId = 8,
+                            FrontImageUrl = "",
+                            Name = "Migdały"
+                        });
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.ProductMapping", b =>
@@ -209,7 +645,7 @@ namespace FoodSense.API.Migrations
                     b.HasIndex("ProductName")
                         .IsUnique();
 
-                    b.ToTable("ProductMappings");
+                    b.ToTable("ProductMappings", (string)null);
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.UserNutritionalGoals", b =>
@@ -241,7 +677,7 @@ namespace FoodSense.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserNutritionalGoals");
+                    b.ToTable("UserNutritionalGoals", (string)null);
                 });
 
             modelBuilder.Entity("FoodSense.API.Data.Models.Category", b =>
@@ -281,7 +717,7 @@ namespace FoodSense.API.Migrations
 
                             b1.HasKey("FoodLogEntryId");
 
-                            b1.ToTable("FoodLogEntries");
+                            b1.ToTable("FoodLogEntries", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("FoodLogEntryId");
@@ -339,10 +775,694 @@ namespace FoodSense.API.Migrations
 
                             b1.HasKey("ProductId");
 
-                            b1.ToTable("Products");
+                            b1.ToTable("Products", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
+
+                            b1.HasData(
+                                new
+                                {
+                                    ProductId = 2001,
+                                    Carbohydrates = 13.800000000000001,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 52.0,
+                                    Proteins = 0.29999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 10.4
+                                },
+                                new
+                                {
+                                    ProductId = 2002,
+                                    Carbohydrates = 23.0,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 89.0,
+                                    Proteins = 1.1000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.10000000000000001,
+                                    Sugars = 12.199999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2003,
+                                    Carbohydrates = 15.0,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 57.0,
+                                    Proteins = 0.40000000000000002,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 9.6999999999999993
+                                },
+                                new
+                                {
+                                    ProductId = 2004,
+                                    Carbohydrates = 11.800000000000001,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 47.0,
+                                    Proteins = 0.80000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 9.4000000000000004
+                                },
+                                new
+                                {
+                                    ProductId = 2005,
+                                    Carbohydrates = 11.5,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 45.0,
+                                    Proteins = 0.80000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 9.0999999999999996
+                                },
+                                new
+                                {
+                                    ProductId = 2006,
+                                    Carbohydrates = 8.0,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 33.0,
+                                    Proteins = 0.69999999999999996,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.10000000000000001,
+                                    Sugars = 4.9000000000000004
+                                },
+                                new
+                                {
+                                    ProductId = 2007,
+                                    Carbohydrates = 12.0,
+                                    Fat = 0.69999999999999996,
+                                    Kcal = 52.0,
+                                    Proteins = 1.2,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.10000000000000001,
+                                    Sugars = 11.199999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2008,
+                                    Carbohydrates = 12.0,
+                                    Fat = 0.5,
+                                    Kcal = 46.0,
+                                    Proteins = 0.40000000000000002,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 10.0
+                                },
+                                new
+                                {
+                                    ProductId = 2009,
+                                    Carbohydrates = 16.0,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 63.0,
+                                    Proteins = 1.1000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 12.0
+                                },
+                                new
+                                {
+                                    ProductId = 2010,
+                                    Carbohydrates = 11.4,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 46.0,
+                                    Proteins = 0.69999999999999996,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 9.4000000000000004
+                                },
+                                new
+                                {
+                                    ProductId = 2011,
+                                    Carbohydrates = 18.100000000000001,
+                                    Fat = 0.40000000000000002,
+                                    Kcal = 69.0,
+                                    Proteins = 0.69999999999999996,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 15.5
+                                },
+                                new
+                                {
+                                    ProductId = 2012,
+                                    Carbohydrates = 14.699999999999999,
+                                    Fat = 0.69999999999999996,
+                                    Kcal = 61.0,
+                                    Proteins = 1.1000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 9.0
+                                },
+                                new
+                                {
+                                    ProductId = 2013,
+                                    Carbohydrates = 15.0,
+                                    Fat = 0.40000000000000002,
+                                    Kcal = 60.0,
+                                    Proteins = 0.80000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 13.699999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2014,
+                                    Carbohydrates = 8.5,
+                                    Fat = 14.699999999999999,
+                                    Kcal = 160.0,
+                                    Proteins = 2.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 2.2000000000000002,
+                                    Sugars = 0.69999999999999996
+                                },
+                                new
+                                {
+                                    ProductId = 2015,
+                                    Carbohydrates = 8.1999999999999993,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 34.0,
+                                    Proteins = 0.80000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 7.9000000000000004
+                                },
+                                new
+                                {
+                                    ProductId = 2016,
+                                    Carbohydrates = 18.699999999999999,
+                                    Fat = 1.2,
+                                    Kcal = 83.0,
+                                    Proteins = 1.7,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 13.699999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2017,
+                                    Carbohydrates = 3.8999999999999999,
+                                    Fat = 0.40000000000000002,
+                                    Kcal = 15.0,
+                                    Proteins = 0.5,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.2000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2018,
+                                    Carbohydrates = 9.5,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 39.0,
+                                    Proteins = 0.90000000000000002,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 8.8000000000000007
+                                },
+                                new
+                                {
+                                    ProductId = 2101,
+                                    Carbohydrates = 20.100000000000001,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 86.0,
+                                    Proteins = 2.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 0.90000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2102,
+                                    Carbohydrates = 3.8999999999999999,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 18.0,
+                                    Proteins = 0.80000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 2.6000000000000001
+                                },
+                                new
+                                {
+                                    ProductId = 2103,
+                                    Carbohydrates = 3.6000000000000001,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 15.0,
+                                    Proteins = 0.69999999999999996,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.7
+                                },
+                                new
+                                {
+                                    ProductId = 2104,
+                                    Carbohydrates = 9.5999999999999996,
+                                    Fat = 0.90000000000000002,
+                                    Kcal = 41.0,
+                                    Proteins = 0.90000000000000002,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 4.7000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2105,
+                                    Carbohydrates = 9.3000000000000007,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 40.0,
+                                    Proteins = 1.1000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 4.2000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2106,
+                                    Carbohydrates = 33.100000000000001,
+                                    Fat = 0.5,
+                                    Kcal = 149.0,
+                                    Proteins = 6.4000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.0
+                                },
+                                new
+                                {
+                                    ProductId = 2107,
+                                    Carbohydrates = 14.4,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 88.0,
+                                    Proteins = 1.3999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.5
+                                },
+                                new
+                                {
+                                    ProductId = 2108,
+                                    Carbohydrates = 5.7999999999999998,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 25.0,
+                                    Proteins = 1.3,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.2000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2109,
+                                    Carbohydrates = 5.5999999999999996,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 31.0,
+                                    Proteins = 1.3999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.2000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2110,
+                                    Carbohydrates = 5.0,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 25.0,
+                                    Proteins = 2.3999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.8999999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2111,
+                                    Carbohydrates = 7.0,
+                                    Fat = 0.40000000000000002,
+                                    Kcal = 34.0,
+                                    Proteins = 2.7999999999999998,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.3999999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2112,
+                                    Carbohydrates = 3.1000000000000001,
+                                    Fat = 0.0,
+                                    Kcal = 17.0,
+                                    Proteins = 1.2,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 2.5
+                                },
+                                new
+                                {
+                                    ProductId = 2113,
+                                    Carbohydrates = 2.8999999999999999,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 15.0,
+                                    Proteins = 1.3,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.3
+                                },
+                                new
+                                {
+                                    ProductId = 2114,
+                                    Carbohydrates = 6.0,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 31.0,
+                                    Proteins = 1.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.5
+                                },
+                                new
+                                {
+                                    ProductId = 2115,
+                                    Carbohydrates = 14.5,
+                                    Fat = 0.5,
+                                    Kcal = 81.0,
+                                    Proteins = 5.4000000000000004,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 5.0999999999999996
+                                },
+                                new
+                                {
+                                    ProductId = 2116,
+                                    Carbohydrates = 3.6000000000000001,
+                                    Fat = 0.40000000000000002,
+                                    Kcal = 23.0,
+                                    Proteins = 2.8999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 0.40000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2117,
+                                    Carbohydrates = 3.8999999999999999,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 20.0,
+                                    Proteins = 2.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.8999999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2118,
+                                    Carbohydrates = 20.100000000000001,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 86.0,
+                                    Proteins = 1.7,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 4.2000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2119,
+                                    Carbohydrates = 6.5,
+                                    Fat = 0.10000000000000001,
+                                    Kcal = 26.0,
+                                    Proteins = 1.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.0
+                                },
+                                new
+                                {
+                                    ProductId = 2120,
+                                    Carbohydrates = 9.5999999999999996,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 43.0,
+                                    Proteins = 1.6000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 8.0
+                                },
+                                new
+                                {
+                                    ProductId = 2121,
+                                    Carbohydrates = 9.1999999999999993,
+                                    Fat = 0.29999999999999999,
+                                    Kcal = 26.0,
+                                    Proteins = 1.5,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 0.90000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2122,
+                                    Carbohydrates = 3.0,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 18.0,
+                                    Proteins = 0.69999999999999996,
+                                    Salt = 0.10000000000000001,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.3
+                                },
+                                new
+                                {
+                                    ProductId = 2123,
+                                    Carbohydrates = 9.4000000000000004,
+                                    Fat = 0.80000000000000004,
+                                    Kcal = 42.0,
+                                    Proteins = 3.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 3.3999999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2124,
+                                    Carbohydrates = 22.800000000000001,
+                                    Fat = 1.3999999999999999,
+                                    Kcal = 86.0,
+                                    Proteins = 3.2999999999999998,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 12.4
+                                },
+                                new
+                                {
+                                    ProductId = 2125,
+                                    Carbohydrates = 15.0,
+                                    Fat = 0.80000000000000004,
+                                    Kcal = 79.0,
+                                    Proteins = 1.8,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.7
+                                },
+                                new
+                                {
+                                    ProductId = 2126,
+                                    Carbohydrates = 4.4000000000000004,
+                                    Fat = 0.69999999999999996,
+                                    Kcal = 30.0,
+                                    Proteins = 3.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.1000000000000001
+                                },
+                                new
+                                {
+                                    ProductId = 2127,
+                                    Carbohydrates = 5.7000000000000002,
+                                    Fat = 1.0,
+                                    Kcal = 31.0,
+                                    Proteins = 3.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 1.7
+                                },
+                                new
+                                {
+                                    ProductId = 2201,
+                                    Carbohydrates = 80.0,
+                                    Fat = 0.59999999999999998,
+                                    Kcal = 360.0,
+                                    Proteins = 7.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.20000000000000001,
+                                    Sugars = 0.5
+                                },
+                                new
+                                {
+                                    ProductId = 2202,
+                                    Carbohydrates = 66.299999999999997,
+                                    Fat = 6.9000000000000004,
+                                    Kcal = 389.0,
+                                    Proteins = 16.899999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 1.6000000000000001,
+                                    Sugars = 1.0
+                                },
+                                new
+                                {
+                                    ProductId = 2203,
+                                    Carbohydrates = 71.5,
+                                    Fat = 3.3999999999999999,
+                                    Kcal = 347.0,
+                                    Proteins = 13.300000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.59999999999999998,
+                                    Sugars = 1.2
+                                },
+                                new
+                                {
+                                    ProductId = 2204,
+                                    Carbohydrates = 75.0,
+                                    Fat = 1.5,
+                                    Kcal = 371.0,
+                                    Proteins = 13.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.29999999999999999,
+                                    Sugars = 2.5
+                                },
+                                new
+                                {
+                                    ProductId = 2205,
+                                    Carbohydrates = 73.0,
+                                    Fat = 1.2,
+                                    Kcal = 364.0,
+                                    Proteins = 10.9,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.20000000000000001,
+                                    Sugars = 3.1000000000000001
+                                },
+                                new
+                                {
+                                    ProductId = 2206,
+                                    Carbohydrates = 49.0,
+                                    Fat = 3.2000000000000002,
+                                    Kcal = 265.0,
+                                    Proteins = 9.0,
+                                    Salt = 1.0,
+                                    SaturatedFat = 0.69999999999999996,
+                                    Sugars = 4.2999999999999998
+                                },
+                                new
+                                {
+                                    ProductId = 2301,
+                                    Carbohydrates = 4.7999999999999998,
+                                    Fat = 3.2000000000000002,
+                                    Kcal = 64.0,
+                                    Proteins = 3.2000000000000002,
+                                    Salt = 0.10000000000000001,
+                                    SaturatedFat = 2.0,
+                                    Sugars = 4.7999999999999998
+                                },
+                                new
+                                {
+                                    ProductId = 2302,
+                                    Carbohydrates = 4.2000000000000002,
+                                    Fat = 18.0,
+                                    Kcal = 200.0,
+                                    Proteins = 2.6000000000000001,
+                                    Salt = 0.10000000000000001,
+                                    SaturatedFat = 10.4,
+                                    Sugars = 3.3999999999999999
+                                },
+                                new
+                                {
+                                    ProductId = 2303,
+                                    Carbohydrates = 4.7000000000000002,
+                                    Fat = 3.2999999999999998,
+                                    Kcal = 61.0,
+                                    Proteins = 3.5,
+                                    Salt = 0.10000000000000001,
+                                    SaturatedFat = 2.1000000000000001,
+                                    Sugars = 4.7000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2304,
+                                    Carbohydrates = 0.69999999999999996,
+                                    Fat = 81.099999999999994,
+                                    Kcal = 743.0,
+                                    Proteins = 0.90000000000000002,
+                                    Salt = 0.0,
+                                    SaturatedFat = 51.399999999999999,
+                                    Sugars = 0.59999999999999998
+                                },
+                                new
+                                {
+                                    ProductId = 2401,
+                                    Carbohydrates = 0.69999999999999996,
+                                    Fat = 9.5,
+                                    Kcal = 143.0,
+                                    Proteins = 12.6,
+                                    Salt = 0.29999999999999999,
+                                    SaturatedFat = 3.1000000000000001,
+                                    Sugars = 0.40000000000000002
+                                },
+                                new
+                                {
+                                    ProductId = 2402,
+                                    Carbohydrates = 3.2999999999999998,
+                                    Fat = 0.20000000000000001,
+                                    Kcal = 22.0,
+                                    Proteins = 3.1000000000000001,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 2.0
+                                },
+                                new
+                                {
+                                    ProductId = 2403,
+                                    Carbohydrates = 0.0,
+                                    Fat = 99.900000000000006,
+                                    Kcal = 884.0,
+                                    Proteins = 0.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 13.800000000000001,
+                                    Sugars = 0.0
+                                },
+                                new
+                                {
+                                    ProductId = 2404,
+                                    Carbohydrates = 99.900000000000006,
+                                    Fat = 0.0,
+                                    Kcal = 387.0,
+                                    Proteins = 0.0,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 99.900000000000006
+                                },
+                                new
+                                {
+                                    ProductId = 2405,
+                                    Carbohydrates = 82.400000000000006,
+                                    Fat = 0.0,
+                                    Kcal = 304.0,
+                                    Proteins = 0.29999999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 0.0,
+                                    Sugars = 82.099999999999994
+                                },
+                                new
+                                {
+                                    ProductId = 2406,
+                                    Carbohydrates = 13.699999999999999,
+                                    Fat = 65.200000000000003,
+                                    Kcal = 654.0,
+                                    Proteins = 15.199999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 6.0999999999999996,
+                                    Sugars = 2.6000000000000001
+                                },
+                                new
+                                {
+                                    ProductId = 2407,
+                                    Carbohydrates = 21.199999999999999,
+                                    Fat = 49.899999999999999,
+                                    Kcal = 579.0,
+                                    Proteins = 21.199999999999999,
+                                    Salt = 0.0,
+                                    SaturatedFat = 3.7999999999999998,
+                                    Sugars = 3.3999999999999999
+                                });
                         });
 
                     b.Navigation("Category");
