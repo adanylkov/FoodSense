@@ -66,8 +66,8 @@ namespace FoodSense.API.Controllers
             return Ok(products.Select(p => p.ToDto()));
         }
 
-        /// <summary>Searches the local catalog and OpenFoodFacts by product name. Results are
-        /// candidates only: nothing is written to the catalog by this endpoint.</summary>
+        /// <summary>Searches the local catalog and the local OpenFoodFacts snapshot by product
+        /// name. Results are candidates only: nothing is written to the catalog by this endpoint.</summary>
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<ProductSearchResultDto>>>> SearchProducts(
             [FromQuery] string name,

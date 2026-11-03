@@ -19,8 +19,9 @@ public class ProductService(
     public async Task<Product?> GetProductByIdAsync(int id)
         => await productRepository.GetByIdAsync(id);
 
-    /// <summary>Read-only lookup: an OpenFoodFacts hit is returned with <c>Id</c> = 0 and is not
-    /// written to the catalog. Persistence happens when the product is added to the pantry.</summary>
+    /// <summary>Read-only lookup: a product from the local OpenFoodFacts snapshot is returned with
+    /// <c>Id</c> = 0 and is not written to the catalog. Persistence happens when the product is
+    /// added to the pantry.</summary>
     public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode)
     {
         var existingProduct = await productRepository.GetByBarcodeAsync(barcode);
@@ -30,7 +31,8 @@ public class ProductService(
         return openFoodFactProduct?.ToProductDto();
     }
 
-    /// <summary>Name search across the local catalog and OpenFoodFacts. Nothing is persisted.</summary>
+    /// <summary>Name search across the local catalog and the local OpenFoodFacts snapshot.
+    /// Nothing is persisted.</summary>
     public async Task<IReadOnlyList<ProductSearchResultDto>> SearchProductsByNameAsync(string name, int limit = 10)
     {
         if (string.IsNullOrWhiteSpace(name)) return [];
