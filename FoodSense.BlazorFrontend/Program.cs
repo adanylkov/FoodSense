@@ -25,6 +25,9 @@ builder.Services.AddScoped<ICalorieTrackerApiService, CalorieTrackerApiService>(
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<PantryViewModel>();
 builder.Services.AddScoped<ProductFormViewModel>();
+// Transient: each host view model (product form, calorie tracker, receipt uploader) owns its own
+// search state so the dropdowns do not share query and results.
+builder.Services.AddTransient<ProductSearchViewModel>();
 builder.Services.AddScoped<ProductDeletionViewModel>();
 builder.Services.AddScoped<ProductListViewModel>();
 builder.Services.AddScoped<ReceiptUploaderViewModel>();

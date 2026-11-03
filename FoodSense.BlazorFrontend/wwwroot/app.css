@@ -114,6 +114,72 @@ h1:focus {
     }
 }
 
+/* Bootstrap utilities CSS is not linked, so this min-width helper is defined locally. */
+.min-w-0 {
+    min-width: 0;
+}
+
+/* Product search dropdown: shared by the product form, calorie tracker and receipt uploader. */
+.product-search-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin-top: 0.25rem;
+    max-height: 21rem; /* shows about 4 candidates on a phone, scrolls for more */
+    overflow-y: auto;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+}
+
+.product-search-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 2.75rem; /* 44 px touch target */
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-bottom: 1px solid var(--bs-border-color-translucent);
+    background-color: transparent;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.product-search-list li:last-child .product-search-item {
+    border-bottom: 0;
+}
+
+.product-search-item:hover,
+.product-search-item:focus-visible {
+    background-color: var(--bs-primary-bg-subtle);
+}
+
+.product-search-item:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: -2px;
+}
+
+.product-search-macros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--bs-secondary-color);
+}
+
+.product-search-spinner {
+    position: absolute;
+    top: 1.9rem; /* aligned with the input, below the label */
+    right: 0.6rem;
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+    color: var(--bs-secondary-color);
+}
+
 .kcal-color {
     color: #e79f18;
 }

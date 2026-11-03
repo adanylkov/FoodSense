@@ -1,0 +1,107 @@
+@using FoodSense.Common.Models
+@implements IDisposable
+
+<div class="position-relative">
+    <label class="form-label small fw-semibold" for="@InputId">@Label</label>
+    <input type="search"
+           id="@InputId"
+           class="form-control rounded-3"
+           placeholder="@Placeholder"
+           value="@ViewModel.Query"
+           autocomplete="off"
+           role="combobox"
+           aria-autocomplete="list"
+           aria-controls="@ListId"
+           aria-expanded="@(ViewModel.IsOpen ? "true" : "false")"
+           @oninput="HandleInput" />
+
+    @if (ViewModel.IsSearching)
+    {
+        <span class="product-search-spinner spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span class="visually-hidden">Searching products...</span>
+    }
+
+    @if (ViewModel.IsOpen)
+    {
+        <ul id="@ListId" class="product-search-list list-unstyled mb-0">
+            @foreach (var result in ViewModel.Results)
+            {
+                <li>
+                    <button type="button"
+                            class="product-search-item"
+                            aria-label="@($"{result.Name} {result.Brand}")"
+                            @onclick="() => SelectAsync(result)">
+                        <img src="@(result.ImageUrl ?? ProductDto.PlaceholderImagePath)"
+                             class="product-thumb"
+                             alt=""
+                             loading="lazy" />
+                        <span class="flex-grow-1 min-w-0">
+                            <span class="d-block fw-semibold text-truncate">@result.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(result.Brand))
+                            {
+                                <span class="d-block text-secondary extra-small text-truncate">@result.Brand</span>
+                            }
+                            <span class="product-search-macros">
+                                <span class="extra-small">@result.Nutrients.EnergyKcal.ToString("0") kcal</span>
+                                <span class="extra-small">B: @result.Nutrients.Proteins.ToString("0.0") g</span>
+                                <span class="extra-small">C: @result.Nutrients.Carbohydrates.ToString("0.0") g</span>
+                                <span class="extra-small">T: @result.Nutrients.Fat.ToString("0.0") g</span>
+                            </span>
+                        </span>
+                        @if (!result.IsPersisted)
+                        {
+                            <span class="badge text-bg-light border" title="Not saved in your catalog yet">OpenFoodFacts</span>
+                        }
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public ProductSearchViewModel ViewModel { get; set; } = default!;
+
+    /// <summary>Raised when the user picks a candidate from the dropdown.</summary>
+    [Parameter] public EventCallback<ProductSearchResultDto> OnSelect { get; set; }
+
+    /// <summary>Raised on every keystroke so the host can mirror the typed text into its form model.</summary>
+    [Parameter] public EventCallback<string> OnQueryChanged { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Product name";
+
+    [Parameter] public string Placeholder { get; set; } = "Search a product";
+
+    /// <summary>Override when several dropdowns are rendered on one page.</summary>
+    [Parameter] public string InputId { get; set; } = "productSearchInput";
+
+    [Parameter] public string ListId { get; set; } = "productSearchList";
+
+    private async Task HandleInput(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString() ?? string.Empty;
+        await OnQueryChanged.InvokeAsync(value);
+        await ViewModel.SearchAsync(value);
+    }
+
+    private async Task SelectAsync(ProductSearchResultDto result)
+    {
+        ViewModel.Select(result);
+        await OnSelect.InvokeAsync(result);
+    }
+
+    protected override void OnInitialized()
+    {
+        ViewModel.StateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged()
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ViewModel.StateChanged -= HandleStateChanged;
+    }
+}

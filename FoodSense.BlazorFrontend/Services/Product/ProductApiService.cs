@@ -13,6 +13,11 @@ public interface IProductApiService
     Task<IReadOnlyList<CategoryDto>> GetCategoriesAsync();
     Task<ProductDto?> GetProductByNameAsync(string productName);
     Task<IEnumerable<ProductDto>?> GetProductsByNameAsync(string productName);
+    /// <summary>Name search across the local catalog and OpenFoodFacts. Results are candidates only,
+    /// nothing is persisted. A candidate with <c>ProductId</c> == 0 is not in the local catalog.</summary>
+    Task<IReadOnlyList<ProductSearchResultDto>> SearchProductsAsync(string name, int limit = 10);
+    /// <summary>Persists a product candidate when it is not in the catalog yet and returns it with id.</summary>
+    Task<ProductDto?> GetOrCreateProductAsync(ProductDto product);
 }
 
 public class ProductApiService : IProductApiService
@@ -70,5 +75,26 @@ public class ProductApiService : IProductApiService
     public async Task<IEnumerable<ProductDto>?> GetProductsByNameAsync(string productName)
     {
         return await _http.GetFromJsonAsync<IEnumerable<ProductDto>>($"api/Product/GetProductsByName/{Uri.EscapeDataString(productName)}");
+    }
+
+    public async Task<IReadOnlyList<ProductSearchResultDto>> SearchProductsAsync(string name, int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return [];
+
+        var response = await _http.GetFromJsonAsync<ApiResponse<IEnumerable<ProductSearchResultDto>>>(
+            $"api/Product/SearchProducts?name={Uri.EscapeDataString(name)}&limit={limit}");
+
+        return response?.Data?.ToList() ?? [];
+    }
+
+    public async Task<ProductDto?> GetOrCreateProductAsync(ProductDto product)
+    {
+        var response = await _http.PostAsJsonAsync("api/Product/GetOrCreateProduct", product);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<ProductDto>();
     }
 }
