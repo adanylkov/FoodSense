@@ -1,14 +1,15 @@
 using FoodSense.API.Data.Models;
 using FoodSense.API.Extensions;
 using FoodSense.API.Repositories;
+using FoodSense.API.Services.ProductSearch;
 using FoodSense.Common.Models;
 
 namespace FoodSense.API.Services;
 
 public class ProductService(
     IProductRepository productRepository,
-    IOpenFoodFactsClient foodFactsClient,
-    IProductMappingRepository productMappingRepository) : IProductService
+    IProductMappingRepository productMappingRepository,
+    IEnumerable<IProductSearchSource> searchSources) : IProductService
 {
     public async Task<IEnumerable<Product>> GetProductsAsync(int page, int pageSize, bool hasPantryItems = false)
         => await productRepository.GetAllAsync(page, pageSize, hasPantryItems);
@@ -24,28 +25,29 @@ public class ProductService(
     /// added to the pantry.</summary>
     public async Task<ProductDto?> GetProductByBarcodeAsync(string barcode)
     {
-        var existingProduct = await productRepository.GetByBarcodeAsync(barcode);
-        if (existingProduct is not null) return existingProduct.ToDto();
+        foreach (var source in searchSources)
+        {
+            var result = await source.GetByBarcodeAsync(barcode);
+            if (result is not null) return result;
+        }
 
-        var openFoodFactProduct = await foodFactsClient.GetProductByBarcodeAsync(barcode);
-        return openFoodFactProduct?.ToProductDto();
+        return null;
     }
 
-    /// <summary>Name search across the local catalog and the local OpenFoodFacts snapshot.
-    /// Nothing is persisted.</summary>
+    /// <summary>Name search across the configured product sources. The product repository source
+    /// is registered first and is always enabled; additional sources are configuration-dependent.</summary>
     public async Task<IReadOnlyList<ProductSearchResultDto>> SearchProductsByNameAsync(string name, int limit = 10)
     {
         if (string.IsNullOrWhiteSpace(name)) return [];
 
-        var localResults = (await productRepository.GetAllByNameAsync(name))
-            .Select(p => p.ToSearchResult())
-            .ToList();
+        var results = new List<ProductSearchResultDto>(limit);
+        foreach (var source in searchSources)
+        {
+            var sourceResults = await source.SearchAsync(name, limit, CancellationToken.None);
+            results.AddRange(sourceResults.Where(result => !IsAlreadyInCatalog(result, results)));
+        }
 
-        var openFoodFactsResults = (await foodFactsClient.SearchProductsAsync(name, limit))
-            .Select(p => p.ToSearchResult());
-
-        return localResults
-            .Concat(openFoodFactsResults.Where(r => !IsAlreadyInCatalog(r, localResults)))
+        return results
             .Take(limit)
             .ToList();
     }

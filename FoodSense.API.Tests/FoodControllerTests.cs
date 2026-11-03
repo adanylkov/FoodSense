@@ -5,6 +5,7 @@ using FoodSense.API.Data.Models;
 using FoodSense.API.Data.ValueObjects;
 using FoodSense.API.Repositories;
 using FoodSense.API.Services;
+using FoodSense.API.Services.ProductSearch;
 using FoodSense.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -358,8 +359,11 @@ public class FoodControllerTests
     {
         return new ProductService(
             new ProductRepository(context),
-            openFoodFactsClient ?? CreateOpenFoodFactsClient().Object,
-            new ProductMappingRepository(context));
+            new ProductMappingRepository(context),
+            [
+                new ProductRepositorySearchSource(new ProductRepository(context)),
+                new OpenFoodFactsSearchSource(openFoodFactsClient ?? CreateOpenFoodFactsClient().Object)
+            ]);
     }
 
     private static Mock<IOpenFoodFactsClient> CreateOpenFoodFactsClient(

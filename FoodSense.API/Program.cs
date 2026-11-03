@@ -1,6 +1,7 @@
 using FoodSense.API.Data;
 using FoodSense.API.Repositories;
 using FoodSense.API.Services;
+using FoodSense.API.Services.ProductSearch;
 using FoodSense.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +15,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.AddSqlServerDbContext<FoodSenseDbContext>("foodsense");
-builder.Services.AddOpenFoodFactsClient();
 builder.Services.AddScoped<IProductRepository, ProductRepository>(); 
+builder.Services.AddScoped<IProductSearchSource, ProductRepositorySearchSource>();
+if (builder.Configuration.GetValue<bool>("ProductSearch:Sources:OpenFoodFacts:Enabled"))
+{
+    builder.Services.AddOpenFoodFactsClient();
+    builder.Services.AddScoped<IProductSearchSource, OpenFoodFactsSearchSource>();
+}
 builder.Services.AddScoped<IProductService, ProductService>(); 
 builder.Services.AddScoped<IPantryRepository, PantryRepository>();
 builder.Services.AddScoped<IPantryService, PantryService>();

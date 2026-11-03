@@ -4,6 +4,7 @@ using FoodSense.API.Data.Models;
 using FoodSense.API.Data.ValueObjects;
 using FoodSense.API.Repositories;
 using FoodSense.API.Services;
+using FoodSense.API.Services.ProductSearch;
 using FoodSense.Common.Models;
 using FoodSense.Common.Requests;
 using Microsoft.EntityFrameworkCore;
@@ -142,8 +143,10 @@ public class PantryControllerTests
         var productRepository = new ProductRepository(context);
         var productService = new ProductService(
             productRepository,
-            new Mock<IOpenFoodFactsClient>().Object,
-            new ProductMappingRepository(context));
+            new ProductMappingRepository(context),
+            [
+                new ProductRepositorySearchSource(productRepository)
+            ]);
 
         return new PantryService(
             new PantryRepository(context),
