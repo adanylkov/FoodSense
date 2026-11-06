@@ -17,6 +17,9 @@ public class OpenFoodFactsResponse
 
 public class OpenFoodFactProduct
 {
+    [JsonPropertyName("code")]
+    public string Code { get; set; } = string.Empty;
+
     [JsonPropertyName("product_name")]
     public string Name { get; set; } = string.Empty;
 
@@ -25,6 +28,9 @@ public class OpenFoodFactProduct
 
     [JsonPropertyName("image_url")]
     public string ImageUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("image_small_url")]
+    public string ImageSmallUrl { get; set; } = string.Empty;
 
     [JsonPropertyName("quantity")]
     public string Quantity { get; set; } = string.Empty;

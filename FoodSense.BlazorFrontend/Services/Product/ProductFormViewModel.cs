@@ -49,6 +49,13 @@ public class ProductFormViewModel(IProductApiService productApi, AlertService al
         }, busy => IsSaving = busy);
     }
 
+    /// <summary>Mirrors the free text typed in the product search box into the form model.</summary>
+    public void SetProductName(string name)
+    {
+        FormModel.ProductName = name;
+        NotifyStateChanged();
+    }
+
     public async Task LookupBarcodeAsync(string? barcode)
     {
         if (string.IsNullOrWhiteSpace(barcode)) return;
@@ -62,7 +69,8 @@ public class ProductFormViewModel(IProductApiService productApi, AlertService al
 
     public void StartEditing(ProductDto product)
     {
-        EditingProductId = product.Id;
+        // An OpenFoodFacts candidate has Id == 0: it is a new product, not an edit of product 0.
+        EditingProductId = product.Id > 0 ? product.Id : null;
         FormModel = product.CloneProduct();
         Alerts.Clear();
         NotifyStateChanged();

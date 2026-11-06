@@ -1,11 +1,15 @@
 using FoodSense.API.Data.Models;
+using FoodSense.API.Extensions;
 using FoodSense.API.Repositories;
-using FoodSense.Common.Models;
 using FoodSense.Common.Requests;
 
 namespace FoodSense.API.Services;
 
-public class PantryService(IPantryRepository pantryRepository, IProductRepository productRepository, ILogger<PantryService> logger) : IPantryService
+public class PantryService(
+    IPantryRepository pantryRepository,
+    IProductRepository productRepository,
+    IProductService productService,
+    ILogger<PantryService> logger) : IPantryService
 {
     public async Task<PantryItem> AddPantryItemAsync(AddPantryItemRequest request)
     {
@@ -20,10 +24,23 @@ public class PantryService(IPantryRepository pantryRepository, IProductRepositor
         return await pantryRepository.AddAsync(pantryItem);
     }
 
-    public async Task<PantryItem> AddPantryItemAsync(ProductDto product, PantryItem pantryItem)
+    /// <summary>Deferred persistence: a product that is not in the catalog yet (Id == 0) is stored
+    /// only now, in the same request that adds it to the pantry.</summary>
+    public async Task<PantryItem> AddPantryItemWithProductAsync(AddPantryItemWithProductRequest request)
     {
-        pantryItem.ProductId = product.Id;
-        pantryItem.UserId = null;
+        if (request.Product is null)
+        {
+            throw new ArgumentException("Product data is required to add a pantry item.");
+        }
+
+        if (request.Quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than 0.");
+        }
+
+        var product = await productService.GetOrCreateProductAsync(request.Product);
+        var pantryItem = new PantryItem(product, request.Quantity);
+
         return await pantryRepository.AddAsync(pantryItem);
     }
 

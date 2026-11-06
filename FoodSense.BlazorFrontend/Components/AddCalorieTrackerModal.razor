@@ -2,6 +2,7 @@
 @using FoodSense.Common.Models
 @using BlazorBarcodeScanner.ZXing.JS
 @inherits ViewModelComponent<AddCalorieTrackerViewModel>
+@inject ProductSearchViewModel Search
 
 @if (VM.IsOpen)
 {
@@ -36,31 +37,15 @@
 
                             <div class="text-center text-muted my-2">- lub -</div>
 
-                            <!-- Wyszukiwanie po nazwie -->
+                            <!-- Wyszukiwanie po nazwie: kandydaci z katalogu i OpenFoodFacts -->
                             <div class="mb-3">
-                                <label class="form-label text-secondary small fw-semibold">Nazwa produktu</label>
-                                <input type="text" class="form-control" placeholder="Zacznij pisać nazwę..." 
-                                       @bind="VM.SearchQuery" 
-                                       @bind:event="oninput" 
-                                       @bind:after="VM.SearchProductsAsync" />
+                                <ProductSearchDropdown ViewModel="Search"
+                                       OnSelect="HandleCandidateSelected"
+                                       Label="Nazwa produktu"
+                                       Placeholder="Zacznij pisać nazwę..."
+                                       InputId="trackerNameSearch"
+                                       ListId="trackerNameSearchList" />
                             </div>
-
-                            <!-- Lista wyników wyszukiwania -->
-                            @if (VM.SearchResults.Any())
-                            {
-                                <div class="list-group shadow-sm" style="max-height: 250px; overflow-y: auto;">
-                                    @foreach (var prod in VM.SearchResults)
-                                    {
-                                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" @onclick="() => VM.AddProduct(prod)">
-                                            <div>
-                                                <span class="fw-semibold d-block">@prod.ProductName</span>
-                                                <small class="text-muted">@prod.Nutrients?.EnergyKcal kcal / 100g</small>
-                                            </div>
-                                            <span class="badge bg-primary rounded-pill">+ Dodaj</span>
-                                        </button>
-                                    }
-                                </div>
-                            }
                         </div>
 
                         <!-- PRAWA KOLUMNA: Wybrane produkty i podsumowanie -->
@@ -160,6 +145,15 @@
 
 @code {
     private bool _isBarcodeScannerOpen;
+
+    // Kandydat trafia do listy posiłku bez zapisu w katalogu: product jest utrwalany
+    // w ConfirmConsumptionAsync, czyli przy jawnej akcji "Zapisz wszystkie".
+    private async Task HandleCandidateSelected(ProductSearchResultDto result)
+    {
+        VM.AddProduct(result.ToProductDto());
+        Search.Clear();
+        StateHasChanged();
+    }
 
     public void Open(MealType mealType)
     {

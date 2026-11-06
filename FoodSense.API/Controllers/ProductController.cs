@@ -35,7 +35,7 @@ namespace FoodSense.API.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Product>> GetProductById(int id)
+        public async Task<ActionResult<ProductDto>> GetProductById(int id)
         {
             var product = await productService.GetProductByIdAsync(id);
             if (product is null) return NotFound();
@@ -45,9 +45,9 @@ namespace FoodSense.API.Controllers
         [HttpGet("{barcode:long}")]
         public async Task<IActionResult> GetProduct(long barcode)
         {
-            var product = await productService.GetProductByBarcodeOrFetchAsync(barcode);
+            var product = await productService.GetProductByBarcodeAsync(barcode);
             if (product is null) return NotFound();
-            return Ok(product.ToDto());
+            return Ok(product);
         }
 
         [HttpGet("{name}")]
@@ -66,26 +66,74 @@ namespace FoodSense.API.Controllers
             return Ok(products.Select(p => p.ToDto()));
         }
 
+        /// <summary>Searches the local catalog and the local OpenFoodFacts snapshot by product
+        /// name. Results are candidates only: nothing is written to the catalog by this endpoint.</summary>
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProductSearchResultDto>>>> SearchProducts(
+            [FromQuery] string name,
+            [FromQuery] int limit = 10)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return Ok(new ApiResponse<IEnumerable<ProductSearchResultDto>>
+                {
+                    Data = [],
+                    TotalCount = 0
+                });
+            }
+
+            var results = await productService.SearchProductsByNameAsync(name, limit);
+            return Ok(new ApiResponse<IEnumerable<ProductSearchResultDto>>
+            {
+                Data = results,
+                TotalCount = results.Count
+            });
+        }
+
+        /// <summary>Persists a product candidate (for example an OpenFoodFacts hit with <c>Id</c> = 0)
+        /// and returns it with its catalog id. Called only when the user explicitly adds the product
+        /// (to the pantry or to a meal) — searching never writes to the catalog.</summary>
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct([FromBody] Product product)
+        public async Task<ActionResult<ProductDto>> GetOrCreateProduct([FromBody] ProductDto product)
+        {
+            if (string.IsNullOrWhiteSpace(product.ProductName))
+            {
+                return BadRequest("Product name is required.");
+            }
+
+            product.Barcode = NormalizeBarcode(product.Barcode);
+
+            try
+            {
+                var persisted = await productService.GetOrCreateProductAsync(product);
+                return Ok(persisted.ToDto());
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<ProductDto>> CreateProduct([FromBody] ProductDto product)
         {
             product.Barcode = NormalizeBarcode(product.Barcode);
 
             if (product.Barcode is not null)
             {
-                var existing = await productService.GetProductByBarcodeOrFetchAsync(product.Barcode);
-                if (existing != null)
+                var existing = await productService.GetProductByBarcodeAsync(product.Barcode);
+                if (existing is not null && existing.Id > 0)
                 {
                     return Conflict("A product with this barcode already exists.");
                 }
             }
 
-            await productService.CreateProductAsync(product);
-            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
+            var created = await productService.CreateProductAsync(product);
+            return CreatedAtAction(nameof(GetProductById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Product>> UpdateProduct(int id, [FromBody] Product product)
+        public async Task<ActionResult<ProductDto>> UpdateProduct(int id, [FromBody] ProductDto product)
         {
             product.Barcode = NormalizeBarcode(product.Barcode);
 

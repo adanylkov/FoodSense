@@ -13,9 +13,7 @@ public class AddCalorieTrackerViewModel : ViewModelBase
     public MealType CurrentMealType { get; private set; } = MealType.Lunch;
 
     // Pola formularza
-    public string SearchQuery { get; set; } = string.Empty;
     public string BarcodeQuery { get; set; } = string.Empty;
-    public List<ProductDto> SearchResults { get; private set; } = [];
     
     // Lista wielu wybranych produktów do dodania
     public List<SelectedMealItem> SelectedItems { get; private set; } = [];
@@ -38,9 +36,7 @@ public class AddCalorieTrackerViewModel : ViewModelBase
     {
         IsOpen = true;
         CurrentMealType = mealType;
-        SearchQuery = string.Empty;
         BarcodeQuery = string.Empty;
-        SearchResults.Clear();
         SelectedItems.Clear();
         NotifyStateChanged();
     }
@@ -49,31 +45,6 @@ public class AddCalorieTrackerViewModel : ViewModelBase
     {
         IsOpen = false;
         NotifyStateChanged();
-    }
-
-    public async Task SearchProductsAsync()
-    {
-        if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            SearchResults.Clear();
-            NotifyStateChanged();
-            return;
-        }
-
-        await RunAsync(async () =>
-        {
-            var response = await _productApi.GetProductsByNameAsync(SearchQuery.Trim());
-            if (response != null)
-            {
-                // Upewniamy się, że pasuje do typu zwracanego przez GetProductsByNameAsync (kolekcja lub pojedynczy obiekt)
-                SearchResults = response.ToList();
-            }
-            else
-            {
-                SearchResults.Clear();
-            }
-            NotifyStateChanged();
-        });
     }
 
     public async Task SearchByBarcodeAsync()
@@ -99,7 +70,10 @@ public class AddCalorieTrackerViewModel : ViewModelBase
 
     public void AddProduct(ProductDto product)
     {
-        var existing = SelectedItems.FirstOrDefault(i => i.Product.Id == product.Id);
+        // Unpersisted candidates all have Id == 0, so match on barcode (preferred) or name.
+        var existing = SelectedItems.FirstOrDefault(i =>
+            (product.Barcode is not null && i.Product.Barcode == product.Barcode)
+            || string.Equals(i.Product.ProductName, product.ProductName, StringComparison.OrdinalIgnoreCase));
         if (existing != null)
         {
             existing.Quantity += 100m; // domyślnie dodaj kolejne 100g
@@ -109,8 +83,6 @@ public class AddCalorieTrackerViewModel : ViewModelBase
             SelectedItems.Add(new SelectedMealItem { Product = product, Quantity = 100m });
         }
 
-        SearchResults.Clear();
-        SearchQuery = string.Empty;
         NotifyStateChanged();
     }
 
@@ -130,6 +102,20 @@ public class AddCalorieTrackerViewModel : ViewModelBase
 
             foreach (var item in SelectedItems)
             {
+                // Persistence happens on this explicit "add meal" action, never when a search
+                // candidate is picked. Unpersisted candidates come in with Id == 0.
+                if (item.Product.Id <= 0)
+                {
+                    var persisted = await _productApi.GetOrCreateProductAsync(item.Product);
+                    if (persisted is null || persisted.Id <= 0)
+                    {
+                        allSuccess = false;
+                        continue;
+                    }
+
+                    item.Product = persisted;
+                }
+
                 var response = await _calorieTrackerApi.LogConsumptionAsync(
                     new Common.Requests.AddFoodLogRequest
                     {

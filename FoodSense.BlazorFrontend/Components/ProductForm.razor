@@ -2,6 +2,7 @@
 @using BlazorBarcodeScanner.ZXing.JS
 @using FoodSense.Common.Models
 @inherits ViewModelComponent<ProductFormViewModel>
+@inject ProductSearchViewModel Search
 
 <aside class="col-lg-4">
     <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 1.5rem; z-index: 10;">
@@ -40,8 +41,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="productNameInput" class="form-label small fw-semibold">Product Name</label>
-                    <InputText id="productNameInput" class="form-control rounded-3" placeholder="Item title" @bind-Value="FormModel.ProductName" />
+                    <ProductSearchDropdown ViewModel="Search"
+                           OnSelect="HandleProductSelected"
+                           OnQueryChanged="HandleNameQuery"
+                           Label="Product Name"
+                           Placeholder="Item title"
+                           InputId="productNameInput"
+                           ListId="productNameSearchList" />
                 </div>
 
                 <div class="mb-3">
@@ -165,6 +171,13 @@
     private NutrientsDto Nutrients => FormModel.Nutrients ??= new NutrientsDto();
 
     protected override Task OnInitializedAsync() => VM.LoadCategoriesAsync();
+
+    // Free text typed in the search box is mirrored into the form model.
+    private void HandleNameQuery(string value) => VM.SetProductName(value);
+
+    // A picked candidate fills the form. An OpenFoodFacts candidate keeps Id 0, so the form stays
+    // in "Create New Product" mode and Save creates it — persistence stays an explicit user action.
+    private void HandleProductSelected(ProductSearchResultDto result) => VM.StartEditing(result.ToProductDto());
 
     private static IEnumerable<(int Id, string Label)> FlattenCategories(
         IEnumerable<CategoryDto> categories,
